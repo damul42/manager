@@ -1,0 +1,42 @@
+# Project Context: AI Agent Marketplace
+
+## 1. Project Overview
+The **AI Agent Marketplace** is a platform curated by PwC designed to bridge the gap between enterprise needs and AI agent providers. It aims to reduce the complexity of AI agent discovery, selection, and adoption while providing a structured framework for risk management and performance tracking.
+
+## 2. Target Users
+*   **Demand Side (Enterprises):** Looking to automate business processes using AI agents but struggling with selection complexity, risk management, and operational integration.
+*   **Supply Side (Agent Providers):** Looking for customer access, trust/validation through PwC, and a platform to scale their solutions after initial PoCs.
+
+## 3. Key Features & User Journey
+### Demand Side (Phase 1 focus)
+1.  **Exploration & Discovery:** A marketplace to browse curated AI agents with detailed filtering (industry, task type, technology).
+2.  **AI Business Architect (Chat-based Requirement Definition):** An AI-driven chat interface that helps users define their business problems, scope, and technical constraints.
+3.  **Analysis Report Generation:** Automatically generates a comprehensive report defining in-scope/out-of-scope tasks, automation levels, and system integration requirements.
+4.  **Agent Recommendation & Comparison:** Recommends the best-fit agents based on the analysis and provides side-by-side comparison reports.
+5.  **ROI Simulation:** Tools to estimate the business impact and return on investment for selected agents.
+6.  **Subscription & Procurement:** Managed pricing plans and standardized contract templates.
+
+### Supply Side (Phase 2 & 3)
+1.  **Agent Registration:** A structured onboarding process for providers to list their agents, including technical specifications and industry focus.
+2.  **Opportunity Matching:** A dashboard for providers to see potential enterprise opportunities with compatibility scores.
+3.  **Performance & Trust Management:** PwC certification/validation and performance tracking (SLA, logs, etc.).
+
+## 4. Technical Constraints & Considerations
+*   **Model Support:** Integration with various LLM providers (Azure OpenAI, AWS Bedrock, Google Vertex AI).
+*   **Security:** Focus on private/on-premise LLM environments for enterprises, data privacy (anonymization), and comprehensive audit logging.
+*   **Integration:** Support for various systems (ERP, CRM, WMS, etc.) via Read/Write APIs.
+*   **Phased Rollout:**
+    *   **Phase 1:** Core demand-side features (Requirements -> Recommendation).
+    *   **Phase 2:** Supply-side onboarding and matching.
+    *   **Phase 3:** Advanced scaling, knowledge hub, and automated partner management.
+
+## 5. Visual Identity & UI
+*   Professional, PwC-branded aesthetic.
+*   Interactive dashboards and clean, wizard-like processes for registration and requirement definition.
+*   Report-centric outputs (PDF/Web reports for business stakeholders).
+
+## 6. Reference Documents
+*   `requirements/raw/기획.pdf`: Business strategy and positioning.
+*   `requirements/raw/phase_definition.pdf`: Rollout phases.
+*   `requirements/raw/TalkFile_Full_ui.pdf`: Detailed UI/UX flow and screen mockups.
+*   `requirements/raw/Models_List_APAC 2.csv`: Initial list of supported AI models.

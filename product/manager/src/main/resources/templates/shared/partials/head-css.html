@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="head-css">
+<!-- sessionStorage 오염 방지: 파싱 불가 값 제거 -->
+<script>
+(function(){try{var v=sessionStorage.getItem("__THEME_CONFIG__");if(v)JSON.parse(v);}catch(e){try{sessionStorage.removeItem("__THEME_CONFIG__");}catch(_){}}})();
+</script>
+<!-- Theme Config Js -->
+<script th:src="@{/js/config.js}"></script>
+<!-- Vendor css -->
+<link rel="stylesheet" th:href="@{/css/vendors.min.css}" type="text/css"/>
+<!-- App css -->
+<link id="app-style" rel="stylesheet" th:href="@{/css/app.min.css}" type="text/css"/>
+
+</th:block>
+</html>

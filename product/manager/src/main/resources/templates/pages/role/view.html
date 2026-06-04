@@ -1,0 +1,255 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{shared/base(title=${'역할 상세'})}">
+
+<th:block layout:fragment="content">
+<div class="wrapper">
+    <th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block>
+    <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+
+    <div class="content-page">
+        <div class="container-fluid">
+            <th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='역할', title='역할 상세')}"></th:block>
+
+            <!-- 툴바 -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <a class="btn btn-sm btn-outline-secondary" th:href="@{/role/list}">
+                    <i class="ti ti-arrow-left me-1"></i>목록
+                </a>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-warning" id="btn-edit" type="button">
+                        <i class="ti ti-pencil me-1"></i>수정
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="btn-delete" type="button">
+                        <i class="ti ti-trash me-1"></i>삭제
+                    </button>
+                </div>
+            </div>
+
+            <!-- 로딩 -->
+            <div id="page-loading" class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+            </div>
+
+            <!-- 상세 내용 -->
+            <div id="page-content" style="display:none;">
+
+                <!-- 역할 기본 정보 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="ti ti-shield me-1"></i>역할 정보</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-3 col-lg-2 text-muted fw-normal">역할명</dt>
+                            <dd class="col-sm-9 col-lg-10 fw-semibold" id="d-name">—</dd>
+
+                            <dt class="col-sm-3 col-lg-2 text-muted fw-normal">비고</dt>
+                            <dd class="col-sm-9 col-lg-10" id="d-remark">—</dd>
+
+                            <dt class="col-sm-3 col-lg-2 text-muted fw-normal">등록일</dt>
+                            <dd class="col-sm-9 col-lg-10 text-muted" id="d-reg-date">—</dd>
+
+                            <dt class="col-sm-3 col-lg-2 text-muted fw-normal mb-0">수정일</dt>
+                            <dd class="col-sm-9 col-lg-10 text-muted mb-0" id="d-upt-date">—</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- 권한 설정 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="ti ti-lock me-1"></i>권한 설정</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="perm-loading" class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                        </div>
+                        <div id="perm-content" style="display:none;">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead class="table-light text-uppercase fs-xxs">
+                                        <tr>
+                                            <th>모듈 / 메뉴</th>
+                                            <th class="text-center" style="width:80px">관리자</th>
+                                            <th class="text-center" style="width:80px">목록</th>
+                                            <th class="text-center" style="width:80px">조회</th>
+                                            <th class="text-center" style="width:80px">입력/수정</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="perm-tbody"></tbody>
+                                </table>
+                            </div>
+                            <div id="perm-empty" class="text-center py-3 text-muted small" style="display:none;">
+                                설정된 권한이 없습니다.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /page-content -->
+
+        </div>
+        <th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block>
+<th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script th:src="@{/js/axios.min.js}"></script>
+<script th:inline="javascript">
+(function () {
+    'use strict';
+
+    const roleId = /*[[${roleId}]]*/ '';
+
+    // ── 데이터 로드 ────────────────────────────────────────────────────
+    Promise.all([
+        axios.get(`/api/roles/${roleId}`),
+        axios.get('/api/modules/with-menus')
+    ])
+    .then(([roleRes, moduleRes]) => {
+        renderRole(roleRes.data);
+        renderPermTree(moduleRes.data, roleRes.data.settings || []);
+    })
+    .catch(() => alert('데이터를 불러오지 못했습니다.'))
+    .finally(() => {
+        document.getElementById('page-loading').style.display = 'none';
+        document.getElementById('page-content').style.display = '';
+        document.getElementById('perm-loading').style.display = 'none';
+        document.getElementById('perm-content').style.display = '';
+    });
+
+    function renderRole(d) {
+        set('d-name',     d.name);
+        set('d-remark',   d.remark || '—');
+        set('d-reg-date', fmtDate(d.regDate));
+        set('d-upt-date', fmtDate(d.uptDate));
+    }
+
+    function renderPermTree(modules, settings) {
+        const tbody = document.getElementById('perm-tbody');
+        const empty = document.getElementById('perm-empty');
+        tbody.innerHTML = '';
+
+        const settingMap = {};
+        settings.forEach(s => {
+            const key = s.moduleId + '|' + (s.menuId || '');
+            settingMap[key] = s;
+        });
+
+        if (!modules || modules.length === 0) {
+            empty.style.display = '';
+            return;
+        }
+
+        let anyRow = false;
+        modules.forEach(mod => {
+            const hasMenus = mod.menus && mod.menus.length > 0;
+            if (hasMenus) {
+                // 모듈 행: 메뉴 설정들을 OR 합산해 파생 표시
+                const menuSettings = mod.menus
+                    .map(menu => settingMap[mod.id + '|' + menu.id])
+                    .filter(Boolean);
+                const derived = derivePerms(menuSettings);
+                tbody.appendChild(makeModuleRow(mod, derived, true));
+                mod.menus.forEach(menu => {
+                    const setting = settingMap[mod.id + '|' + menu.id] || null;
+                    tbody.appendChild(makeMenuRow(mod, menu, setting));
+                    if (setting) anyRow = true;
+                });
+                if (derived) anyRow = true;
+            } else {
+                // 모듈 행: 저장된 설정 직접 표시
+                const setting = settingMap[mod.id + '|'] || null;
+                tbody.appendChild(makeModuleRow(mod, setting, false));
+                if (setting) anyRow = true;
+            }
+        });
+
+        if (!anyRow && settings.length === 0) {
+            empty.style.display = '';
+        }
+    }
+
+    // 메뉴 설정 목록을 OR 합산하여 파생 권한 객체 반환
+    function derivePerms(settingsList) {
+        if (!settingsList || settingsList.length === 0) return null;
+        return {
+            admin: settingsList.some(s => s.admin === 'Y') ? 'Y' : 'N',
+            list:  settingsList.some(s => s.list  === 'Y') ? 'Y' : 'N',
+            read:  settingsList.some(s => s.read  === 'Y') ? 'Y' : 'N',
+            write: settingsList.some(s => s.write === 'Y') ? 'Y' : 'N',
+        };
+    }
+
+    function makeModuleRow(mod, setting, derived) {
+        const tr = document.createElement('tr');
+        tr.className = 'table-light';
+        const iconHtml = mod.icon ? `<i class="${esc(mod.icon)} me-1"></i>` : '<i class="ti ti-puzzle me-1"></i>';
+        const label = derived
+            ? `<strong>${iconHtml}${esc(mod.name)}</strong><span class="ms-2 text-muted small fst-italic">메뉴별 설정</span>`
+            : `<strong>${iconHtml}${esc(mod.name)}</strong>`;
+        tr.innerHTML = `<td>${label}</td>${permCells(setting)}`;
+        return tr;
+    }
+
+    function makeMenuRow(mod, menu, setting) {
+        const tr = document.createElement('tr');
+        const iconHtml = menu.icon ? `<i class="${esc(menu.icon)} me-1 text-muted"></i>` : '';
+        tr.innerHTML = `
+            <td class="ps-4"><i class="ti ti-corner-down-right me-1 text-muted"></i>${iconHtml}${esc(menu.name)}</td>
+            ${permCells(setting)}`;
+        return tr;
+    }
+
+    function permCells(s) {
+        const yn = v => v === 'Y'
+            ? '<span class="badge badge-soft-success">Y</span>'
+            : '<span class="badge badge-soft-secondary text-muted">N</span>';
+        if (!s) {
+            return '<td class="text-center"><span class="badge badge-soft-secondary text-muted">N</span></td>'
+                 .repeat(4);
+        }
+        return `<td class="text-center">${yn(s.admin)}</td>
+                <td class="text-center">${yn(s.list)}</td>
+                <td class="text-center">${yn(s.read)}</td>
+                <td class="text-center">${yn(s.write)}</td>`;
+    }
+
+    // ── 버튼 이벤트 ───────────────────────────────────────────────────
+    document.getElementById('btn-edit').addEventListener('click', () => {
+        location.href = `/role/${roleId}/edit`;
+    });
+
+    document.getElementById('btn-delete').addEventListener('click', () => {
+        if (!confirm('해당 역할을 삭제하시겠습니까? 사용자에게 부여된 역할도 함께 해제됩니다.')) return;
+        axios.delete(`/api/roles/${roleId}`)
+            .then(() => location.href = '/role/list')
+            .catch(err => alert(err.response?.data?.message || '삭제에 실패했습니다.'));
+    });
+
+    // ── 유틸 ──────────────────────────────────────────────────────────
+    function set(id, val) {
+        document.getElementById(id).textContent = val ?? '—';
+    }
+
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function fmtDate(s) {
+        if (!s || s.length < 8) return s || '—';
+        const d = s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6,8);
+        return s.length >= 14
+            ? d + ' ' + s.slice(8,10) + ':' + s.slice(10,12) + ':' + s.slice(12,14)
+            : d;
+    }
+})();
+</script>
+</th:block>
+
+</html>

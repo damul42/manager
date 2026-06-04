@@ -1,0 +1,271 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{shared/base(title=${'사용자 등록'})}">
+
+<th:block layout:fragment="content">
+<div class="wrapper">
+    <th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block>
+    <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+
+    <div class="content-page">
+        <div class="container-fluid">
+            <th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='사용자', title='사용자 등록')}"></th:block>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-7">
+
+                    <!-- 기본 정보 -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="ti ti-user-plus me-1"></i>기본 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label" for="f-email">이메일 <span class="text-danger">*</span></label>
+                                <input class="form-control" id="f-email" type="email" placeholder="로그인 ID로 사용됩니다."/>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="f-name">이름</label>
+                                <input class="form-control" id="f-name" type="text"
+                                       placeholder="표시 이름 (직원 연동 시 직원 이름 우선)"/>
+                                <div class="form-text">직원이 연결된 경우 직원 이름이 우선 표시됩니다.</div>
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label" for="f-status">상태</label>
+                                <select class="form-select" id="f-status">
+                                    <option value="E">활성</option>
+                                    <option value="D">비활성</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 비밀번호 -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="ti ti-lock me-1"></i>비밀번호</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label" for="f-password">비밀번호 <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input class="form-control" id="f-password" type="password"
+                                           placeholder="8자 이상" autocomplete="new-password"/>
+                                    <button class="btn btn-outline-secondary" type="button" id="btn-toggle-pw">
+                                        <i class="ti ti-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label" for="f-confirm-pw">비밀번호 확인 <span class="text-danger">*</span></label>
+                                <input class="form-control" id="f-confirm-pw" type="password"
+                                       placeholder="비밀번호 재입력" autocomplete="new-password"/>
+                                <div id="pw-mismatch" class="text-danger small mt-1" style="display:none;">
+                                    비밀번호가 일치하지 않습니다.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 직원 연동 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="ti ti-id-badge me-1"></i>직원 연동 <span class="text-muted fw-normal fs-6">(선택)</span></h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label" for="f-emp-search">직원 검색</label>
+                                <div class="input-group">
+                                    <input class="form-control" id="f-emp-search" type="text"
+                                           placeholder="이름 또는 사번으로 검색" autocomplete="off"/>
+                                    <button class="btn btn-outline-secondary" type="button" id="btn-emp-clear"
+                                            style="display:none;">
+                                        <i class="ti ti-x"></i>
+                                    </button>
+                                </div>
+                                <!-- 검색 결과 드롭다운 -->
+                                <div id="emp-dropdown" class="list-group shadow-sm mt-1" style="display:none; position:relative; z-index:100;"></div>
+                            </div>
+
+                            <!-- 선택된 직원 정보 -->
+                            <div id="emp-selected" style="display:none;">
+                                <div class="alert alert-soft-primary d-flex align-items-center gap-2 mb-0">
+                                    <i class="ti ti-check-circle fs-5"></i>
+                                    <div>
+                                        <strong id="sel-name">—</strong>
+                                        <span class="text-muted ms-2" id="sel-detail">—</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <input type="hidden" id="f-employee-id"/>
+                        </div>
+                    </div>
+
+                    <!-- 액션 버튼 -->
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-outline-secondary" id="btn-cancel">
+                            <i class="ti ti-x me-1"></i>취소
+                        </button>
+                        <button class="btn btn-primary" id="btn-save">
+                            <i class="ti ti-device-floppy me-1"></i>저장
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+        <th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block>
+<th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    const listUrl = '/pages/user/list';
+    let searchTimer = null;
+
+    // ── 비밀번호 토글 ─────────────────────────────────────────────────
+    document.getElementById('btn-toggle-pw').addEventListener('click', function () {
+        const input = document.getElementById('f-password');
+        const icon  = this.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('ti-eye', 'ti-eye-off');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('ti-eye-off', 'ti-eye');
+        }
+    });
+
+    // ── 비밀번호 일치 확인 ─────────────────────────────────────────────
+    document.getElementById('f-confirm-pw').addEventListener('input', checkPw);
+    document.getElementById('f-password').addEventListener('input', checkPw);
+
+    function checkPw() {
+        const pw  = document.getElementById('f-password').value;
+        const cpw = document.getElementById('f-confirm-pw').value;
+        document.getElementById('pw-mismatch').style.display =
+            (pw && cpw && pw !== cpw) ? '' : 'none';
+    }
+
+    // ── 직원 검색 ─────────────────────────────────────────────────────
+    const empSearch   = document.getElementById('f-emp-search');
+    const empDropdown = document.getElementById('emp-dropdown');
+    const empSelected = document.getElementById('emp-selected');
+    const btnClear    = document.getElementById('btn-emp-clear');
+    const hiddenEmpId = document.getElementById('f-employee-id');
+
+    empSearch.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        const q = this.value.trim();
+        if (!q) { closeDropdown(); return; }
+        searchTimer = setTimeout(() => fetchEmployees(q), 300);
+    });
+
+    empSearch.addEventListener('blur', function () {
+        setTimeout(closeDropdown, 200);
+    });
+
+    function fetchEmployees(q) {
+        axios.get('/api/employees', { params: { q } })
+            .then(res => renderDropdown(res.data))
+            .catch(() => closeDropdown());
+    }
+
+    function renderDropdown(list) {
+        empDropdown.innerHTML = '';
+        if (!list.length) {
+            empDropdown.innerHTML =
+                '<div class="list-group-item text-muted small">검색 결과가 없습니다.</div>';
+            empDropdown.style.display = '';
+            return;
+        }
+        list.forEach(emp => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'list-group-item list-group-item-action';
+            item.innerHTML =
+                `<strong>${emp.name}</strong> <span class="text-muted small">${emp.employeeNo}</span>` +
+                (emp.position || emp.orgId
+                    ? ` <span class="text-muted small ms-1">${[emp.position, emp.orgId].filter(Boolean).join(' / ')}</span>`
+                    : '');
+            item.addEventListener('click', () => selectEmployee(emp));
+            empDropdown.appendChild(item);
+        });
+        empDropdown.style.display = '';
+    }
+
+    function selectEmployee(emp) {
+        hiddenEmpId.value = emp.id;
+        empSearch.value   = emp.name;
+        closeDropdown();
+        btnClear.style.display = '';
+
+        document.getElementById('sel-name').textContent   = `${emp.name} (${emp.employeeNo})`;
+        document.getElementById('sel-detail').textContent =
+            [emp.position, emp.orgId].filter(Boolean).join(' / ') || '';
+        empSelected.style.display = '';
+    }
+
+    function closeDropdown() {
+        empDropdown.style.display = 'none';
+        empDropdown.innerHTML = '';
+    }
+
+    btnClear.addEventListener('click', function () {
+        hiddenEmpId.value          = '';
+        empSearch.value            = '';
+        empSelected.style.display  = 'none';
+        btnClear.style.display     = 'none';
+    });
+
+    // ── 저장 ──────────────────────────────────────────────────────────
+    document.getElementById('btn-save').addEventListener('click', () => {
+        const email      = document.getElementById('f-email').value.trim();
+        const name       = document.getElementById('f-name').value.trim();
+        const password   = document.getElementById('f-password').value;
+        const confirmPw  = document.getElementById('f-confirm-pw').value;
+        const status     = document.getElementById('f-status').value;
+        const employeeId = document.getElementById('f-employee-id').value || null;
+
+        if (!email) { alert('이메일을 입력하세요.'); return; }
+        if (!password) { alert('비밀번호를 입력하세요.'); return; }
+        if (password.length < 8) { alert('비밀번호는 8자 이상이어야 합니다.'); return; }
+        if (password !== confirmPw) { alert('비밀번호가 일치하지 않습니다.'); return; }
+
+        const payload = { email, name: name || null, password, confirmPassword: confirmPw, status, employeeId };
+
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>저장 중...';
+
+        axios.post('/api/users', payload)
+            .then(res => location.href = `/pages/user/${res.data.id}`)
+            .catch(err => {
+                const msg = err.response?.data?.message
+                         || err.response?.data?.errors?.[0]?.defaultMessage
+                         || '저장에 실패했습니다.';
+                alert(msg);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ti ti-device-floppy me-1"></i>저장';
+            });
+    });
+
+    // ── 취소 ──────────────────────────────────────────────────────────
+    document.getElementById('btn-cancel').addEventListener('click', () => {
+        location.href = listUrl;
+    });
+})();
+</script>
+</th:block>
+
+</html>

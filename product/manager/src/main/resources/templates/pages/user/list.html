@@ -1,0 +1,239 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{shared/base(title=#{page.user.list.title})}">
+
+<th:block layout:fragment="styles">
+    <link rel="stylesheet" th:href="@{/plugins/datatables/responsive.bootstrap5.min.css}" type="text/css"/>
+</th:block>
+
+<th:block layout:fragment="content">
+<div class="wrapper">
+    <th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block>
+    <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+
+    <div class="content-page">
+        <div class="container-fluid">
+            <th:block th:replace="~{shared/partials/page-title :: page-title(subtitle=#{page.user.subtitle}, title=#{page.user.list.title})}"></th:block>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                            <h4 class="card-title mb-0" th:text="#{page.user.list.card.title}">사용자 목록</h4>
+                            <div class="d-flex gap-2 align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary" id="btn-refresh"
+                                        th:title="#{btn.refresh}">
+                                    <i class="ti ti-refresh"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary lh-1" id="btn-add">
+                                    <i class="ti ti-plus me-1"></i>
+                                    <span th:text="#{btn.add.user}">사용자 추가</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 로딩 인디케이터 -->
+                        <div id="table-loading" class="text-center py-4" style="display:none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="ms-2 text-muted" th:text="#{loading.text}">불러오는 중...</span>
+                        </div>
+
+                        <!-- 에러 메시지 -->
+                        <div id="table-error" class="alert alert-danger mx-3 mt-2" style="display:none;">
+                            <i class="ti ti-alert-circle me-1"></i>
+                            <span id="table-error-msg" th:text="#{msg.loadError}">데이터를 불러오지 못했습니다.</span>
+                        </div>
+
+                        <div class="card-body">
+                            <table class="table dt-responsive align-middle mb-0 nowrap" id="user-list-table">
+                                <thead class="thead-sm text-uppercase fs-xxs">
+                                    <tr>
+                                        <th th:text="#{col.email}">이메일</th>
+                                        <th th:text="#{col.name}">이름</th>
+                                        <th th:text="#{col.empNo}">사번</th>
+                                        <th th:text="#{col.dept}">부서</th>
+                                        <th th:text="#{col.empLink}">직원연동</th>
+                                        <th th:text="#{col.status}">상태</th>
+                                        <th th:text="#{col.createdAt}">등록일</th>
+                                        <th class="text-center" style="width:110px;" th:text="#{col.action}">액션</th>
+                                    </tr>
+                                    <tr id="column-search-inputs">
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.email}" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.name}" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.empNo}" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.dept}" type="text"/></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- container-fluid -->
+        <th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block>
+<th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+</th:block>
+
+<th:block layout:fragment="scripts">
+    <script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.bootstrap5.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.responsive.min.js}"></script>
+    <script th:src="@{/plugins/datatables/responsive.bootstrap5.min.js}"></script>
+
+    <script th:inline="javascript">
+    (function () {
+        'use strict';
+
+        // ── 서버에서 주입된 메시지 맵 ─────────────────────────────────
+        const MSG = /*[[${messages}]]*/ {};
+
+        // ── DataTable 초기화 ──────────────────────────────────────────
+        const table = new DataTable('#user-list-table', {
+            responsive: true,
+            orderCellsTop: true,
+            language: {
+                emptyTable:  MSG['dt.emptyTable']       || '데이터가 없습니다.',
+                zeroRecords: MSG['dt.zeroRecords']      || '검색 결과가 없습니다.',
+                info:        MSG['dt.info']             || '_START_ - _END_ / _TOTAL_ 건',
+                infoEmpty:   MSG['dt.infoEmpty']        || '0 건',
+                search:      MSG['dt.search']           || '검색:',
+                lengthMenu:  MSG['dt.lengthMenu']       || '_MENU_ 건 보기',
+                paginate: {
+                    previous: MSG['dt.paginate.prev']   || '이전',
+                    next:     MSG['dt.paginate.next']   || '다음'
+                }
+            },
+            columns: [
+                { data: 'email' },
+                { data: 'displayName' },
+                { data: 'employeeNo',  defaultContent: '-' },
+                { data: 'orgId',       defaultContent: '-' },
+                {
+                    data: 'hasEmployee',
+                    render: (v) => v
+                        ? `<span class="badge badge-soft-primary"><i class="ti ti-link me-1"></i>${MSG['emp.linked'] || '연동'}</span>`
+                        : `<span class="badge badge-soft-secondary">${MSG['emp.none'] || '없음'}</span>`,
+                    searchable: false
+                },
+                {
+                    data: 'status',
+                    render: (v) => v === 'E'
+                        ? `<span class="badge badge-soft-success">${MSG['status.active'] || '활성'}</span>`
+                        : `<span class="badge badge-soft-danger">${MSG['status.inactive'] || '비활성'}</span>`,
+                    searchable: false
+                },
+                {
+                    data: 'createdAt',
+                    render: (v) => v || '-',
+                    searchable: false
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    searchable: false,
+                    className: 'text-center',
+                    render: (id) => `
+                        <div class="d-flex justify-content-center gap-1">
+                            <button class="btn btn-icon btn-sm btn-outline-info"    onclick="userAction('view',   '${id}')" title="${MSG['btn.view']   || '보기'}">
+                                <i class="ti ti-eye fs-sm"></i>
+                            </button>
+                            <button class="btn btn-icon btn-sm btn-outline-warning" onclick="userAction('edit',   '${id}')" title="${MSG['btn.edit']   || '수정'}">
+                                <i class="ti ti-pencil fs-sm"></i>
+                            </button>
+                            <button class="btn btn-icon btn-sm btn-outline-danger"  onclick="userAction('delete', '${id}')" title="${MSG['btn.delete'] || '삭제'}">
+                                <i class="ti ti-trash fs-sm"></i>
+                            </button>
+                        </div>`
+                }
+            ],
+            initComplete: function () {
+                this.api().columns([0, 1, 2, 3]).every(function (idx) {
+                    const col = this;
+                    const input = document.querySelector(
+                        `#column-search-inputs th:nth-child(${idx + 1}) input`
+                    );
+                    if (input) {
+                        input.addEventListener('input', function () {
+                            col.search(this.value).draw();
+                        });
+                    }
+                });
+            }
+        });
+
+        // ── 데이터 로드 (Axios) ───────────────────────────────────────
+        function loadUsers(status) {
+            setLoading(true);
+            hideError();
+            document.querySelectorAll('#column-search-inputs input').forEach(i => i.value = '');
+            table.columns().search('');
+
+            const params = {};
+            if (status) params.status = status;
+
+            axios.get('/api/users', { params })
+                .then(res => table.clear().rows.add(res.data).draw())
+                .catch(err => {
+                    const msg = err.response?.data?.message || MSG['msg.userLoadError'] || '사용자 목록을 불러오지 못했습니다.';
+                    showError(msg);
+                })
+                .finally(() => setLoading(false));
+        }
+
+        // ── 상태 필터 ─────────────────────────────────────────────────
+        document.getElementById('status-filter').addEventListener('change', function () {
+            loadUsers(this.value);
+        });
+
+        // ── 새로고침 ──────────────────────────────────────────────────
+        document.getElementById('btn-refresh').addEventListener('click', () => {
+            loadUsers(document.getElementById('status-filter').value);
+        });
+
+        // ── 추가 버튼 ─────────────────────────────────────────────────
+        document.getElementById('btn-add').addEventListener('click', () => {
+            location.href = '/user/create';
+        });
+
+        // ── 액션 핸들러 ───────────────────────────────────────────────
+        window.userAction = function (type, id) {
+            if (type === 'view') {
+                location.href = `/user/${id}`;
+            } else if (type === 'edit') {
+                location.href = `/user/${id}/edit`;
+            } else if (type === 'delete') {
+                if (!confirm(MSG['msg.deleteConfirm'] || '해당 사용자를 삭제하시겠습니까?')) return;
+                axios.delete(`/api/users/${id}`)
+                    .then(() => loadUsers(document.getElementById('status-filter').value))
+                    .catch(err => alert(err.response?.data?.message || MSG['msg.deleteError'] || '삭제에 실패했습니다.'));
+            }
+        };
+
+        // ── 유틸 ──────────────────────────────────────────────────────
+        function setLoading(show) {
+            document.getElementById('table-loading').style.display = show ? '' : 'none';
+        }
+        function showError(msg) {
+            document.getElementById('table-error-msg').textContent = msg;
+            document.getElementById('table-error').style.display = '';
+        }
+        function hideError() {
+            document.getElementById('table-error').style.display = 'none';
+        }
+
+        // ── 최초 로드 ─────────────────────────────────────────────────
+        loadUsers('');
+    })();
+    </script>
+</th:block>
+
+</html>

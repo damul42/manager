@@ -1,0 +1,111 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{shared/base(title=${'Echart Line Chart'})}" >
+
+<th:block layout:fragment="styles">
+
+</th:block>
+
+<th:block layout:fragment="content">
+<!-- Begin page -->
+<div class="wrapper">
+<th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block> <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+<!-- ============================================================== -->
+<!-- Start Main Content -->
+<!-- ============================================================== -->
+<div class="content-page">
+<div class="container-fluid">
+<th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='Charts', title='Line Echart')}"></th:block>
+<div class="row">
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">Line Chart</h4>
+</div>
+<div class="card-body">
+<div id="chart-line" style="min-height: 300px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">Line Stacked Chart</h4>
+</div>
+<div class="card-body">
+<div id="chart-line-stacked" style="min-height: 300px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">Line Marker</h4>
+</div>
+<div class="card-body">
+<div id="chart-line-marker" style="min-height: 300px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">Dynamic Line</h4>
+</div>
+<div class="card-body">
+<div id="chart-dynamic-line" style="min-height: 300px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">Step Line</h4>
+</div>
+<div class="card-body">
+<div id="chart-step-line" style="min-height: 300px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">Line Y Category</h4>
+</div>
+<div class="card-body">
+<div id="chart-line-y-category" style="min-height: 300px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+</div>
+<!-- end row -->
+</div>
+<!-- container -->
+<th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+</div>
+<!-- ============================================================== -->
+<!-- End of Main Content -->
+<!-- ============================================================== -->
+</div>
+<!-- END wrapper -->
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block> <th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+<!-- E Charts js -->
+<!-- E Charts Demo js -->
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script th:src="@{/plugins/echarts/echarts.min.js}"></script>
+<script th:src="@{/js/pages/chart-echart-line.js}"></script>
+</th:block>
+
+</html>

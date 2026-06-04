@@ -1,0 +1,229 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{shared/base(title=${'모듈 관리'})}">
+
+<th:block layout:fragment="styles">
+    <link rel="stylesheet" th:href="@{/plugins/datatables/responsive.bootstrap5.min.css}" type="text/css"/>
+</th:block>
+
+<th:block layout:fragment="content">
+<div class="wrapper">
+    <th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block>
+    <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+
+    <div class="content-page">
+        <div class="container-fluid">
+            <th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='모듈', title='모듈 관리')}"></th:block>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                            <h4 class="card-title mb-0">모듈 목록</h4>
+                            <div class="d-flex gap-2 align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary" id="btn-refresh" title="새로고침">
+                                    <i class="ti ti-refresh"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary lh-1" id="btn-add">
+                                    <i class="ti ti-plus me-1"></i>모듈 추가
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="table-loading" class="text-center py-4" style="display:none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="ms-2 text-muted">불러오는 중...</span>
+                        </div>
+
+                        <div id="table-error" class="alert alert-danger mx-3 mt-2" style="display:none;">
+                            <i class="ti ti-alert-circle me-1"></i>
+                            <span id="table-error-msg">데이터를 불러오지 못했습니다.</span>
+                        </div>
+
+                        <div class="card-body">
+                            <table class="table dt-responsive align-middle mb-0" id="module-list-table">
+                                <thead class="thead-sm text-uppercase fs-xxs">
+                                    <tr>
+                                        <th>순서</th>
+                                        <th>모듈명</th>
+                                        <th>URL</th>
+                                        <th>아이콘</th>
+                                        <th>비고</th>
+                                        <th>상태</th>
+                                        <th class="text-center" style="width:120px;">액션</th>
+                                    </tr>
+                                    <tr id="column-search-inputs">
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="순서" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="모듈명" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="URL" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="아이콘" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="비고" type="text"/></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- container-fluid -->
+        <th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block>
+<th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+</th:block>
+
+<th:block layout:fragment="scripts">
+    <script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.bootstrap5.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.responsive.min.js}"></script>
+    <script th:src="@{/plugins/datatables/responsive.bootstrap5.min.js}"></script>
+    <script th:src="@{/js/axios.min.js}"></script>
+
+    <script th:inline="javascript">
+    (function () {
+        'use strict';
+
+        const MSG = /*[[${messages}]]*/ {};
+
+        // ── DataTable 초기화 ──────────────────────────────────────────
+        const table = new DataTable('#module-list-table', {
+            responsive: true,
+            orderCellsTop: true,
+            language: {
+                emptyTable:  MSG['dt.emptyTable']     || '데이터가 없습니다.',
+                zeroRecords: MSG['dt.zeroRecords']    || '검색 결과가 없습니다.',
+                info:        MSG['dt.info']           || '_START_ - _END_ / _TOTAL_ 건',
+                infoEmpty:   MSG['dt.infoEmpty']      || '0 건',
+                search:      MSG['dt.search']         || '검색:',
+                lengthMenu:  MSG['dt.lengthMenu']     || '_MENU_ 건 보기',
+                paginate: {
+                    previous: MSG['dt.paginate.prev'] || '이전',
+                    next:     MSG['dt.paginate.next'] || '다음'
+                }
+            },
+            columns: [
+                { data: 'seq',    defaultContent: '-' },
+                { data: 'name' },
+                { data: 'url',    defaultContent: '-' },
+                {
+                    data: 'icon',
+                    defaultContent: '-',
+                    render: (v) => v
+                        ? `<i class="${v}"></i><span class="ms-1 text-muted small">${v}</span>`
+                        : '-'
+                },
+                { data: 'remark', defaultContent: '-' },
+                {
+                    data: 'status',
+                    searchable: false,
+                    render: (v) => v === 'E'
+                        ? `<span class="badge badge-soft-success">${MSG['status.active']   || '활성'}</span>`
+                        : `<span class="badge badge-soft-danger">${MSG['status.inactive']  || '비활성'}</span>`
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    searchable: false,
+                    className: 'text-center',
+                    render: (id) => `
+                        <div class="d-flex justify-content-center gap-1">
+                            <button class="btn btn-icon btn-sm btn-outline-info"
+                                    onclick="moduleAction('view','${id}')"
+                                    title="${MSG['btn.view'] || '보기'}">
+                                <i class="ti ti-eye fs-sm"></i>
+                            </button>
+                            <button class="btn btn-icon btn-sm btn-outline-warning"
+                                    onclick="moduleAction('edit','${id}')"
+                                    title="${MSG['btn.edit'] || '수정'}">
+                                <i class="ti ti-pencil fs-sm"></i>
+                            </button>
+                            <button class="btn btn-icon btn-sm btn-outline-danger"
+                                    onclick="moduleAction('delete','${id}')"
+                                    title="${MSG['btn.delete'] || '삭제'}">
+                                <i class="ti ti-trash fs-sm"></i>
+                            </button>
+                        </div>`
+                }
+            ],
+            // ── 컬럼 검색 입력 연결 ────────────────────────────────────
+            initComplete: function () {
+                this.api().columns([0, 1, 2, 3, 4]).every(function (idx) {
+                    const col = this;
+                    const input = document.querySelector(
+                        `#column-search-inputs th:nth-child(${idx + 1}) input`
+                    );
+                    if (input) {
+                        input.addEventListener('input', function () {
+                            col.search(this.value).draw();
+                        });
+                    }
+                });
+            }
+        });
+
+        // ── 데이터 로드 ───────────────────────────────────────────────
+        function loadModules(status) {
+            setLoading(true);
+            hideError();
+            // 컬럼 검색 초기화
+            document.querySelectorAll('#column-search-inputs input').forEach(i => i.value = '');
+            table.columns().search('');
+
+            const params = {};
+            if (status) params.status = status;
+
+            axios.get('/api/modules', { params })
+                .then(res => table.clear().rows.add(res.data).draw())
+                .catch(err => {
+                    const msg = err.response?.data?.message || MSG['msg.loadError'] || '데이터를 불러오지 못했습니다.';
+                    showError(msg);
+                })
+                .finally(() => setLoading(false));
+        }
+
+        // ── 이벤트 ───────────────────────────────────────────────────
+        document.getElementById('status-filter').addEventListener('change', function () {
+            loadModules(this.value);
+        });
+        document.getElementById('btn-refresh').addEventListener('click', () => {
+            loadModules(document.getElementById('status-filter').value);
+        });
+        document.getElementById('btn-add').addEventListener('click', () => {
+            location.href = '/module/create';
+        });
+
+        window.moduleAction = function (type, id) {
+            if (type === 'view') {
+                location.href = `/module/${id}`;
+            } else if (type === 'edit') {
+                location.href = `/module/${id}/edit`;
+            } else if (type === 'delete') {
+                if (!confirm(MSG['msg.deleteConfirm'] || '해당 모듈을 삭제하시겠습니까?')) return;
+                axios.delete(`/api/modules/${id}`)
+                    .then(() => loadModules(document.getElementById('status-filter').value))
+                    .catch(err => alert(err.response?.data?.message || MSG['msg.deleteError'] || '삭제에 실패했습니다.'));
+            }
+        };
+
+        function setLoading(show) {
+            document.getElementById('table-loading').style.display = show ? '' : 'none';
+        }
+        function showError(msg) {
+            document.getElementById('table-error-msg').textContent = msg;
+            document.getElementById('table-error').style.display = '';
+        }
+        function hideError() {
+            document.getElementById('table-error').style.display = 'none';
+        }
+
+        loadModules('');
+    })();
+    </script>
+</th:block>
+
+</html>

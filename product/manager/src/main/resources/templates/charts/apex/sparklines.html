@@ -1,0 +1,121 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{shared/base(title=${'Sparkline Apexcharts'})}" >
+
+<th:block layout:fragment="styles">
+
+</th:block>
+
+<th:block layout:fragment="content">
+<!-- Begin page -->
+<div class="wrapper">
+<th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block> <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+<!-- ============================================================== -->
+<!-- Start Page Content here -->
+<!-- ============================================================== -->
+<div class="content-page">
+<div class="container-fluid">
+<th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='Charts', title='Sparkline Apexcharts')}"></th:block>
+<div class="row">
+<div class="col-12">
+<div class="card">
+<div class="card-body">
+<div class="row g-3" dir="ltr">
+<div class="col-md-4">
+<div class="apex-charts" id="spark1"></div>
+</div>
+<div class="col-md-4">
+<div class="apex-charts" id="spark2"></div>
+</div>
+<div class="col-md-4">
+<div class="apex-charts" id="spark3"></div>
+</div>
+</div>
+<!-- end row -->
+</div>
+<!-- end card body-->
+<div class="row">
+<div class="col-12">
+<div class="table-responsive">
+<table class="table table-centered table-custom mb-0">
+<thead class="bg-light bg-opacity-50 fs-xxs thead-sm text-uppercase">
+<tr>
+<th>Total Value</th>
+<th>Percentage of Portfolio</th>
+<th>Last 10 days</th>
+<th>Volume</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$32,554</td>
+<td>15%</td>
+<td>
+<div id="chart1"></div>
+</td>
+<td>
+<div id="chart5"></div>
+</td>
+</tr>
+<tr>
+<td>$23,533</td>
+<td>7%</td>
+<td>
+<div id="chart2"></div>
+</td>
+<td>
+<div id="chart6"></div>
+</td>
+</tr>
+<tr>
+<td>$54,276</td>
+<td>9%</td>
+<td>
+<div id="chart3"></div>
+</td>
+<td>
+<div id="chart7"></div>
+</td>
+</tr>
+<tr>
+<td>$11,533</td>
+<td>2%</td>
+<td>
+<div id="chart4"></div>
+</td>
+<td>
+<div id="chart8"></div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- end table-responsive -->
+</div>
+<!-- end col -->
+</div>
+<!-- end row-->
+</div>
+<!-- end card -->
+</div>
+<!-- end col-->
+</div>
+<!-- end row-->
+</div>
+<!-- container -->
+<th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+</div>
+<!-- ============================================================== -->
+<!-- End Page content -->
+<!-- ============================================================== -->
+</div>
+<!-- END wrapper -->
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block> <th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+<!-- Apex Charts js -->
+<!-- Apex Chart Sparkline Demo js -->
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script th:src="@{/plugins/apexcharts/apexcharts.min.js}"></script>
+<script th:src="@{/js/pages/chart-apex-sparklines.js}"></script>
+</th:block>
+
+</html>

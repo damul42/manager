@@ -1,0 +1,104 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{shared/base(title=${'Echart GEO Map'})}" >
+
+<th:block layout:fragment="styles">
+
+</th:block>
+
+<th:block layout:fragment="content">
+<!-- Begin page -->
+<div class="wrapper">
+<th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block> <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+<!-- ============================================================== -->
+<!-- Start Main Content -->
+<!-- ============================================================== -->
+<div class="content-page">
+<div class="container-fluid">
+<th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='Charts', title='GEO Maps')}"></th:block>
+<div class="row">
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">World Map</h4>
+</div>
+<div class="card-body">
+<div id="world-map" style="min-height: 400px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">USA Map</h4>
+</div>
+<div class="card-body">
+<div id="usa-map" style="min-height: 400px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+</div>
+<div class="row">
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">Morphing between Map and Bar Chart</h4>
+</div>
+<div class="card-body">
+<div id="map-bar-morphing" style="min-height: 400px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">Pie Chart on Geo Map</h4>
+</div>
+<div class="card-body">
+<div id="pie-chart-on-map" style="min-height: 400px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+</div>
+<!-- end row -->
+<div class="row">
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title mb-0">GEO SVG Scatter</h4>
+</div>
+<div class="card-body">
+<div id="geo-svg-scatter-map" style="min-height: 400px"></div>
+</div>
+</div>
+<!-- end card -->
+</div>
+<!-- end col -->
+</div>
+</div>
+<!-- container -->
+<th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+</div>
+<!-- ============================================================== -->
+<!-- End of Main Content -->
+<!-- ============================================================== -->
+</div>
+<!-- END wrapper -->
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block> <th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+<!-- E Charts js -->
+<!-- E Charts Demo js -->
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script th:src="@{/plugins/echarts/echarts.min.js}"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts/map/js/world.js"></script>
+<script th:src="@{/js/pages/chart-echart-geo-map.js}"></script>
+</th:block>
+
+</html>

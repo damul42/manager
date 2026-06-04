@@ -1,0 +1,184 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{shared/base(title=#{page.employee.create.title})}">
+
+<th:block layout:fragment="content">
+<div class="wrapper">
+    <th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block>
+    <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+
+    <div class="content-page">
+        <div class="container-fluid">
+            <th:block th:replace="~{shared/partials/page-title :: page-title(subtitle=#{page.employee.subtitle}, title=#{page.employee.create.title})}"></th:block>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="ti ti-id-badge me-1"></i>기본 정보</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label" for="f-emp-no">
+                                        <span th:text="#{col.emp.employeeNo}">사번</span>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input class="form-control" id="f-emp-no" type="text"
+                                           placeholder="예: EMP001"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="f-name">
+                                        <span th:text="#{col.emp.name}">이름</span>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input class="form-control" id="f-name" type="text"
+                                           th:placeholder="#{col.emp.name}"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="f-status">
+                                        <span th:text="#{col.emp.status}">재직상태</span>
+                                    </label>
+                                    <select class="form-select" id="f-status">
+                                        <option value="E" th:text="#{emp.status.working}">재직</option>
+                                        <option value="D" th:text="#{emp.status.resigned}">퇴직</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="f-org">
+                                        <span th:text="#{col.emp.orgId}">부서</span>
+                                    </label>
+                                    <input class="form-control" id="f-org" type="text"
+                                           th:placeholder="#{col.emp.orgId}"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="f-position">
+                                        <span th:text="#{col.emp.position}">직위</span>
+                                    </label>
+                                    <input class="form-control" id="f-position" type="text"
+                                           th:placeholder="#{col.emp.position}"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="f-start-date">
+                                        <span th:text="#{col.emp.startDate}">입사일</span>
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input class="form-control" id="f-start-date" type="text"
+                                           placeholder="YYYYMMDD" maxlength="8"/>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="f-end-date">
+                                        <span th:text="#{col.emp.endDate}">퇴사일</span>
+                                    </label>
+                                    <input class="form-control" id="f-end-date" type="text"
+                                           placeholder="YYYYMMDD (선택)" maxlength="8"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="ti ti-phone me-1"></i>연락처</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="f-mobile" th:text="#{col.emp.mobile}">휴대폰</label>
+                                    <input class="form-control" id="f-mobile" type="text"
+                                           th:placeholder="#{col.emp.mobile}"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="f-phone" th:text="#{col.emp.phone}">전화</label>
+                                    <input class="form-control" id="f-phone" type="text"
+                                           th:placeholder="#{col.emp.phone}"/>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label" for="f-email" th:text="#{col.emp.email}">업무이메일</label>
+                                    <input class="form-control" id="f-email" type="email"
+                                           th:placeholder="#{col.emp.email}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 액션 버튼 -->
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-outline-secondary" id="btn-cancel">
+                            <i class="ti ti-x me-1"></i><span th:text="#{btn.cancel}">취소</span>
+                        </button>
+                        <button class="btn btn-primary" id="btn-save">
+                            <i class="ti ti-device-floppy me-1"></i><span th:text="#{btn.save}">저장</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+        <th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block>
+<th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script th:inline="javascript">
+(function () {
+    'use strict';
+
+    const MSG = /*[[${messages}]]*/ {};
+
+    document.getElementById('btn-cancel').addEventListener('click', () => {
+        location.href = '/employee/list';
+    });
+
+    document.getElementById('btn-save').addEventListener('click', () => {
+        const employeeNo = document.getElementById('f-emp-no').value.trim();
+        const name       = document.getElementById('f-name').value.trim();
+        const startDate  = document.getElementById('f-start-date').value.trim();
+        const endDate    = document.getElementById('f-end-date').value.trim();
+        const status     = document.getElementById('f-status').value;
+
+        if (!employeeNo) { alert(MSG['msg.emp.empNoRequired']   || '사번을 입력하세요.'); return; }
+        if (!name)       { alert(MSG['msg.emp.nameRequired']    || '이름을 입력하세요.'); return; }
+        if (!startDate)  { alert(MSG['msg.emp.startDateRequired'] || '입사일을 입력하세요.'); return; }
+        if (!/^\d{8}$/.test(startDate)) { alert(MSG['msg.emp.startDateFormat'] || '입사일은 YYYYMMDD 형식이어야 합니다.'); return; }
+        if (endDate && !/^\d{8}$/.test(endDate)) { alert(MSG['msg.emp.endDateFormat'] || '퇴사일은 YYYYMMDD 형식이어야 합니다.'); return; }
+
+        const payload = {
+            employeeNo,
+            name,
+            orgId:    document.getElementById('f-org').value.trim()      || null,
+            position: document.getElementById('f-position').value.trim() || null,
+            mobile:   document.getElementById('f-mobile').value.trim()   || null,
+            phone:    document.getElementById('f-phone').value.trim()    || null,
+            email:    document.getElementById('f-email').value.trim()    || null,
+            startDate,
+            endDate:  endDate || null,
+            status
+        };
+
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + (MSG['loading.saving'] || '저장 중...');
+
+        axios.post('/api/employees', payload)
+            .then(res => location.href = `/employee/${res.data.id}`)
+            .catch(err => {
+                const msg = err.response?.data?.message
+                         || err.response?.data?.errors?.[0]?.defaultMessage
+                         || MSG['msg.saveError'] || '저장에 실패했습니다.';
+                alert(msg);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ti ti-device-floppy me-1"></i>' + (MSG['btn.save'] || '저장');
+            });
+    });
+})();
+</script>
+</th:block>
+
+</html>

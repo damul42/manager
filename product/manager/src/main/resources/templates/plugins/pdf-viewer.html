@@ -1,0 +1,76 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{shared/base(title=${'PDF Viewer'})}" >
+
+<th:block layout:fragment="styles">
+
+</th:block>
+
+<th:block layout:fragment="content">
+<!-- Begin page -->
+<div class="wrapper">
+<th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block> <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+<!-- ============================================================== -->
+<!-- Start Main Content -->
+<!-- ============================================================== -->
+<div class="content-page">
+<div class="container-fluid">
+<th:block th:replace="~{shared/partials/page-title :: page-title(title='PDF Viewer', subtitle='Plugins')}"></th:block>
+<div class="container">
+<div class="row">
+<div class="col-12">
+<div class="card">
+<div class="card-body">
+<div class="text-center">
+<div class="btn-group text-nowrap">
+<button class="btn btn-dark" id="prev">
+<i class="ti ti-arrow-left"></i>
+<span class="d-none d-sm-inline ms-2">Previous</span>
+</button>
+<button class="btn btn-dark" id="next">
+<i class="ti ti-arrow-right"></i>
+<span class="d-none d-sm-inline ms-2">Next</span>
+</button>
+<button class="btn btn-dark" id="zoomin">
+<i class="ti ti-zoom-in"></i>
+<span class="d-none d-sm-inline ms-2">Zoom In</span>
+</button>
+<button class="btn btn-dark" id="zoomout">
+<i class="ti ti-zoom-out"></i>
+<span class="d-none d-sm-inline ms-2">Zoom Out</span>
+</button>
+<button class="btn btn-dark rounded-end-3" id="zoomfit">100%</button>
+<input class="form-control rounded-end-0 ms-1" id="page_num" style="width: 50px" type="text"/>
+<span class="input-group-text rounded-start-0 border-start-0" id="page_count">/ 00</span>
+</div>
+</div>
+<div class="text-center overflow-auto mt-3">
+<canvas class="pdfcanvas border rounded-3" id="the-canvas"></canvas>
+</div>
+</div>
+<!--end card-body -->
+</div>
+<!-- end card-->
+</div>
+<!-- end col-->
+</div>
+<!-- end row-->
+</div>
+<!-- end container-->
+</div>
+<th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+</div>
+<!-- ============================================================== -->
+<!-- End of Main Content -->
+<!-- ============================================================== -->
+</div>
+<!-- END wrapper -->
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block> <th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+<!-- PDF Plugin Js-->
+<!-- PDF Viewer Page Js-->
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script th:src="@{/plugins/pdfjs/pdf.min.js}"></script>
+<script th:src="@{/js/pages/plugins-pdf-viewer.js}"></script>
+</th:block>
+
+</html>

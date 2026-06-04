@@ -1,0 +1,87 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{shared/base(title=${'Boxplot Apexcharts'})}" >
+
+<th:block layout:fragment="styles">
+
+</th:block>
+
+<th:block layout:fragment="content">
+<!-- Begin page -->
+<div class="wrapper">
+<th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block> <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+<!-- ============================================================== -->
+<!-- Start Page Content here -->
+<!-- ============================================================== -->
+<div class="content-page">
+<div class="container-fluid">
+<th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='Charts', title='Boxplot Apexchart')}"></th:block>
+<div class="row">
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title">Basic Boxplot</h4>
+</div>
+<div class="card-body">
+<div dir="ltr">
+<div class="apex-charts" id="basic-boxplot"></div>
+</div>
+</div>
+<!-- end card body-->
+</div>
+<!-- end card -->
+</div>
+<!-- end col-->
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title">Scatter Boxplot</h4>
+</div>
+<div class="card-body">
+<div dir="ltr">
+<div class="apex-charts" id="scatter-boxplot"></div>
+</div>
+</div>
+<!-- end card body-->
+</div>
+<!-- end card -->
+</div>
+<!-- end col-->
+</div>
+<!-- end row-->
+<div class="row">
+<div class="col-xl-6">
+<div class="card">
+<div class="card-header">
+<h4 class="card-title">Horizontal BoxPlot</h4>
+</div>
+<div class="card-body">
+<div dir="ltr">
+<div class="apex-charts" id="horizontal-boxplot"></div>
+</div>
+</div>
+<!-- end card body-->
+</div>
+<!-- end card -->
+</div>
+<!-- end col-->
+</div>
+<!-- end row-->
+</div>
+<!-- container -->
+<th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+</div>
+<!-- ============================================================== -->
+<!-- End Page content -->
+<!-- ============================================================== -->
+</div>
+<!-- END wrapper -->
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block> <th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+<!-- Apex Chart js -->
+<!-- Apex Chart Polar Area Demo js -->
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script th:src="@{/plugins/apexcharts/apexcharts.min.js}"></script>
+<script th:src="@{/js/pages/chart-apex-boxplot.js}"></script>
+</th:block>
+
+</html>

@@ -1,0 +1,75 @@
+spring:
+  application:
+    name: manager
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/manager
+    username: manager
+    password: manager
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all          # 모든 ISR 확인 후 완료 (데이터 유실 방지)
+      retries: 3
+      properties:
+        spring.json.add.type.headers: false   # 수신 측에 타입 정보 강제하지 않음
+
+    consumer:
+      group-id: manager-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false              # 수동 커밋 (AckMode.MANUAL_IMMEDIATE)
+      properties:
+        spring.json.trusted.packages: com.hk.mgmt  # 역직렬화 허용 패키지
+
+    listener:
+      ack-mode: manual_immediate
+      concurrency: 3          # 파티션 수에 맞게 조정
+      poll-timeout: 3000ms
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
+
+jwt:
+  secret: your-secret-key-must-be-at-least-256-bits-long-for-hs256
+  access-token-expiration: 1800000   # 30분 (ms)
+  refresh-token-expiration: 604800000 # 7일 (ms)
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui
+    operations-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+    disable-swagger-default-url: true
+  show-actuator: false
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json

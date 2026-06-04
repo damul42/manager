@@ -1,0 +1,140 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{shared/base(title=${'Vector Maps'})}" >
+
+<th:block layout:fragment="styles">
+<link rel="stylesheet" th:href="@{/plugins/jsvectormap/jsvectormap.min.css}" type="text/css"/>
+</th:block>
+
+<th:block layout:fragment="content">
+<!-- Begin page -->
+<div class="wrapper">
+<th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block> <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+<!-- ============================================================== -->
+<!-- Start Main Content -->
+<!-- ============================================================== -->
+<div class="content-page">
+<div class="container-fluid">
+<th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='Maps', title='Vector Maps')}"></th:block>
+<div class="container">
+<div class="row">
+<div class="col-lg-12">
+<div class="card">
+<div class="card-header border-0 border-bottom border-dashed">
+<h4 class="card-title">Examples</h4>
+</div>
+<div class="card-body">
+<div class="row g-3">
+<div class="col-lg-4">
+<h5 class="mb-1">World Vector Map</h5>
+<p class="text-muted mb-0">A global map showing countries with interactive markers.</p>
+</div>
+<div class="col-lg-8">
+<div id="world-map-markers" style="height: 360px"></div>
+</div>
+</div>
+<div class="my-4 border-top border-dashed"></div>
+<div class="row g-3">
+<div class="col-lg-4">
+<h5 class="mb-1">World Vector Live Map</h5>
+<p class="text-muted mb-0">Live dynamic vector representation of the world with real-time features.</p>
+</div>
+<div class="col-lg-8">
+<div id="world-map-markers-line" style="height: 360px"></div>
+</div>
+</div>
+<div class="my-4 border-top border-dashed"></div>
+<div class="row g-3">
+<div class="col-lg-4">
+<h5 class="mb-1">US Vector Map</h5>
+<p class="text-muted mb-0">Interactive vector map of the United States with state-level details.</p>
+</div>
+<div class="col-lg-8">
+<div id="usa-vector-map" style="height: 360px"></div>
+</div>
+</div>
+<div class="my-4 border-top border-dashed"></div>
+<div class="row g-3">
+<div class="col-lg-4">
+<h5 class="mb-1">India Vector Map</h5>
+<p class="text-muted mb-0">Detailed vector map of India with region highlights.</p>
+</div>
+<div class="col-lg-8">
+<div id="india-vector-map" style="height: 360px"></div>
+</div>
+</div>
+<div class="my-4 border-top border-dashed"></div>
+<div class="row g-3">
+<div class="col-lg-4">
+<h5 class="mb-1">Canada Vector Map</h5>
+<p class="text-muted mb-0">Displays Canadian provinces and territories with interactive regions.</p>
+</div>
+<div class="col-lg-8">
+<div id="canada-vector-map" style="height: 360px"></div>
+</div>
+</div>
+<div class="my-4 border-top border-dashed"></div>
+<div class="row g-3">
+<div class="col-lg-4">
+<h5 class="mb-1">Russia Vector Map</h5>
+<p class="text-muted mb-0">Interactive map highlighting major regions across Russia.</p>
+</div>
+<div class="col-lg-8">
+<div id="russia-vector-map" style="height: 360px"></div>
+</div>
+</div>
+<div class="my-4 border-top border-dashed"></div>
+<div class="row g-3">
+<div class="col-lg-4">
+<h5 class="mb-1">Iraq Vector Map</h5>
+<p class="text-muted mb-0">Vector visualization of Iraq highlighting provinces and regions.</p>
+</div>
+<div class="col-lg-8">
+<div id="iraq-vector-map" style="height: 360px"></div>
+</div>
+</div>
+<div class="my-4 border-top border-dashed"></div>
+<div class="row g-3">
+<div class="col-lg-4">
+<h5 class="mb-1">Spain Vector Map</h5>
+<p class="text-muted mb-0">Geographical map of Spain with region-based interaction.</p>
+</div>
+<div class="col-lg-8">
+<div id="spain-vector-map" style="height: 360px"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- card end -->
+</div>
+</div>
+</div>
+<!-- end container-->
+</div>
+<!-- end container-fluid-->
+<th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+</div>
+<!-- ============================================================== -->
+<!-- End of Main Content -->
+<!-- ============================================================== -->
+</div>
+<!-- END wrapper -->
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block> <th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+<!-- Vector Map Js -->
+<!-- Vector Map Demo js-->
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script th:src="@{/plugins/jsvectormap/jsvectormap.min.js}"></script>
+<script th:src="@{/js/maps/world-merc.js}"></script>
+<script th:src="@{/js/maps/world.js}"></script>
+<script th:src="@{/js/maps/in-mill-en.js}"></script>
+<script th:src="@{/js/maps/canada.js}"></script>
+<script th:src="@{/js/maps/iraq.js}"></script>
+<script th:src="@{/js/maps/russia.js}"></script>
+<script th:src="@{/js/maps/spain.js}"></script>
+<script th:src="@{/js/maps/us-aea-en.js}"></script>
+<script th:src="@{/js/maps/us-lcc-en.js}"></script>
+<script th:src="@{/js/maps/us-mill-en.js}"></script>
+<script th:src="@{/js/pages/maps-vector.js}"></script>
+</th:block>
+
+</html>

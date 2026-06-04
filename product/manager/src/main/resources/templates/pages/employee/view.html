@@ -1,0 +1,219 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{shared/base(title=#{page.employee.detail.title})}">
+
+<th:block layout:fragment="content">
+<div class="wrapper">
+    <th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block>
+    <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+
+    <div class="content-page">
+        <div class="container-fluid">
+            <th:block th:replace="~{shared/partials/page-title :: page-title(subtitle=#{page.employee.subtitle}, title=#{page.employee.detail.title})}"></th:block>
+
+            <!-- 툴바 -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <a class="btn btn-sm btn-outline-secondary" th:href="@{/employee/list}">
+                    <i class="ti ti-arrow-left me-1"></i><span th:text="#{btn.list}">목록</span>
+                </a>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-warning" id="btn-edit">
+                        <i class="ti ti-pencil me-1"></i><span th:text="#{btn.edit}">수정</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="btn-delete">
+                        <i class="ti ti-trash me-1"></i><span th:text="#{btn.delete}">삭제</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 로딩 -->
+            <div id="page-loading" class="text-center py-5">
+                <div class="spinner-border text-primary"></div>
+            </div>
+
+            <div id="page-content" style="display:none;">
+                <div class="row g-3">
+
+                    <!-- 기본 정보 -->
+                    <div class="col-lg-5">
+                        <div class="card h-100">
+                            <div class="card-header d-flex align-items-center gap-2">
+                                <h5 class="card-title mb-0">
+                                    <i class="ti ti-id-badge me-1"></i>
+                                    <span th:text="#{page.employee.subtitle}">직원</span> 정보
+                                </h5>
+                                <span id="d-status-badge"></span>
+                            </div>
+                            <div class="card-body">
+                                <!-- 사진 -->
+                                <div class="text-center mb-3">
+                                    <img id="d-photo" src="" alt="photo"
+                                         class="rounded-circle border"
+                                         style="display:none; width:88px; height:88px; object-fit:cover;"/>
+                                    <div id="d-photo-placeholder"
+                                         class="rounded-circle bg-light d-flex align-items-center justify-content-center border mx-auto"
+                                         style="width:88px; height:88px;">
+                                        <i class="ti ti-user fs-1 text-muted"></i>
+                                    </div>
+                                    <div class="mt-2 fw-bold fs-5" id="d-name">—</div>
+                                    <div class="text-muted small" id="d-position">—</div>
+                                </div>
+                                <dl class="row mb-0">
+                                    <dt class="col-5 text-muted fw-normal" th:text="#{col.emp.employeeNo}">사번</dt>
+                                    <dd class="col-7 fw-semibold" id="d-emp-no">—</dd>
+
+                                    <dt class="col-5 text-muted fw-normal" th:text="#{col.emp.orgId}">부서</dt>
+                                    <dd class="col-7" id="d-org">—</dd>
+
+                                    <dt class="col-5 text-muted fw-normal" th:text="#{col.emp.mobile}">휴대폰</dt>
+                                    <dd class="col-7" id="d-mobile">—</dd>
+
+                                    <dt class="col-5 text-muted fw-normal" th:text="#{col.emp.phone}">전화</dt>
+                                    <dd class="col-7" id="d-phone">—</dd>
+
+                                    <dt class="col-5 text-muted fw-normal" th:text="#{col.emp.email}">업무이메일</dt>
+                                    <dd class="col-7" id="d-email">—</dd>
+
+                                    <dt class="col-5 text-muted fw-normal" th:text="#{col.emp.startDate}">입사일</dt>
+                                    <dd class="col-7" id="d-start">—</dd>
+
+                                    <dt class="col-5 text-muted fw-normal" th:text="#{col.emp.endDate}">퇴사일</dt>
+                                    <dd class="col-7" id="d-end">—</dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 연결된 계정 -->
+                    <div class="col-lg-7">
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="ti ti-user-circle me-1"></i>
+                                    <span th:text="#{col.emp.hasUser}">계정연동</span>
+                                </h5>
+                            </div>
+                            <!-- 계정 없음 -->
+                            <div id="user-empty" class="card-body text-center text-muted py-5" style="display:none;">
+                                <i class="ti ti-unlink fs-2 d-block mb-2"></i>
+                                연결된 사용자 계정이 없습니다.
+                            </div>
+                            <!-- 계정 있음 -->
+                            <div id="user-info" class="card-body" style="display:none;">
+                                <dl class="row mb-0">
+                                    <dt class="col-4 text-muted fw-normal" th:text="#{col.email}">이메일</dt>
+                                    <dd class="col-8 fw-semibold" id="d-user-email">—</dd>
+                                </dl>
+                                <div class="mt-2">
+                                    <a id="btn-go-user" href="#" class="btn btn-sm btn-outline-info">
+                                        <i class="ti ti-external-link me-1"></i>사용자 상세 보기
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 감사 정보 -->
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body py-2">
+                                <div class="row g-2 text-muted small">
+                                    <div class="col-md-6">
+                                        <span th:text="#{col.createdAt}">등록일</span>: <span id="d-reg-date">—</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        수정일: <span id="d-upt-date">—</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+        <th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block>
+<th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script th:inline="javascript">
+(function () {
+    'use strict';
+
+    const employeeId = /*[[${employeeId}]]*/ '';
+    const MSG        = /*[[${messages}]]*/ {};
+
+    axios.get(`/api/employees/${employeeId}`)
+        .then(res => render(res.data))
+        .catch(() => alert(MSG['msg.emp.detailError'] || '직원 정보를 불러오지 못했습니다.'))
+        .finally(() => {
+            document.getElementById('page-loading').style.display = 'none';
+            document.getElementById('page-content').style.display = '';
+        });
+
+    function render(d) {
+        set('d-name',    d.name);
+        set('d-emp-no',  d.employeeNo);
+        set('d-position', d.position || '—');
+        set('d-org',     d.orgId    || '—');
+        set('d-mobile',  d.mobile   || '—');
+        set('d-phone',   d.phone    || '—');
+        set('d-email',   d.email    || '—');
+        set('d-start',   fmt8(d.startDate));
+        set('d-end',     d.endDate ? fmt8(d.endDate) : '재직 중');
+        set('d-reg-date', fmtTs(d.regDate));
+        set('d-upt-date', fmtTs(d.uptDate));
+
+        document.getElementById('d-status-badge').innerHTML = d.status === 'E'
+            ? `<span class="badge badge-soft-success">${MSG['emp.status.working']  || '재직'}</span>`
+            : `<span class="badge badge-soft-secondary">${MSG['emp.status.resigned'] || '퇴직'}</span>`;
+
+        if (d.photo) {
+            document.getElementById('d-photo').src = d.photo;
+            document.getElementById('d-photo').style.display = '';
+            document.getElementById('d-photo-placeholder').style.display = 'none';
+        }
+
+        if (d.hasUser) {
+            set('d-user-email', d.linkedUserEmail);
+            document.getElementById('btn-go-user').href = `/user/${d.linkedUserId}`;
+            document.getElementById('user-info').style.display  = '';
+            document.getElementById('user-empty').style.display = 'none';
+        } else {
+            document.getElementById('user-empty').style.display = '';
+            document.getElementById('user-info').style.display  = 'none';
+        }
+    }
+
+    document.getElementById('btn-edit').addEventListener('click', () => {
+        location.href = `/employee/${employeeId}/edit`;
+    });
+
+    document.getElementById('btn-delete').addEventListener('click', () => {
+        if (!confirm(MSG['msg.emp.deleteConfirm'] || '해당 직원을 퇴직 처리하시겠습니까?')) return;
+        axios.delete(`/api/employees/${employeeId}`)
+            .then(() => location.href = '/employee/list')
+            .catch(err => alert(err.response?.data?.message || MSG['msg.deleteError'] || '처리에 실패했습니다.'));
+    });
+
+    function set(id, val) { document.getElementById(id).textContent = val ?? '—'; }
+    function fmt8(s) {
+        if (!s || s.length !== 8) return s || '—';
+        return s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6,8);
+    }
+    function fmtTs(s) {
+        if (!s || s.length < 8) return s || '—';
+        const d = s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6,8);
+        return s.length >= 14
+            ? d + ' ' + s.slice(8,10) + ':' + s.slice(10,12) + ':' + s.slice(12,14)
+            : d;
+    }
+})();
+</script>
+</th:block>
+
+</html>

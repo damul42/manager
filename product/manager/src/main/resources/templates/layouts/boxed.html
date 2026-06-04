@@ -1,0 +1,62 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{shared/base(title=${'Boxed Layout'})}" data-layout-width="boxed" data-sidenav-size="on-hover">
+
+<th:block layout:fragment="styles">
+
+</th:block>
+
+<th:block layout:fragment="content">
+<!-- Begin page -->
+<div class="wrapper">
+<th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block> <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+<!-- ============================================================== -->
+<!-- Start Main Content -->
+<!-- ============================================================== -->
+<div class="content-page">
+<div class="container-fluid">
+<th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='Layouts', title='Boxed')}"></th:block>
+<div class="row">
+<div class="col-12">
+<div class="alert alert-info alert-bordered border-start border-info d-flex align-items-start gap-2">
+<i class="ti ti-info-circle fs-xxl"></i>
+<div>
+                                    To enable the boxed layout, add
+                                    <code>data-layout-width="boxed"</code>
+                                    to the
+                                    <code>&lt;html&gt;</code>
+                                    tag. For optimal spacing and usability, we also recommend adding
+                                    <code>data-sidenav-size="on-hover"</code>
+                                    to make the sidebar compact while keeping more room for content.
+                                </div>
+</div>
+</div>
+</div>
+<div class="row">
+<div class="col-12">
+<div class="card">
+<div class="card-body text-center">
+<h4 class="m-0">Your custom content here</h4>
+</div>
+<!-- end card-body-->
+</div>
+<!-- end card-->
+</div>
+<!-- end col-->
+</div>
+<!-- end row-->
+</div>
+<!-- container -->
+<th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+</div>
+<!-- ============================================================== -->
+<!-- End of Main Content -->
+<!-- ============================================================== -->
+</div>
+<!-- END wrapper -->
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block> <th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+</th:block>
+
+<th:block layout:fragment="scripts">
+
+</th:block>
+
+</html>

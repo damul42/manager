@@ -1,0 +1,238 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{shared/base(title=#{page.employee.list.title})}">
+
+<th:block layout:fragment="styles">
+    <link rel="stylesheet" th:href="@{/plugins/datatables/responsive.bootstrap5.min.css}" type="text/css"/>
+</th:block>
+
+<th:block layout:fragment="content">
+<div class="wrapper">
+    <th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block>
+    <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+
+    <div class="content-page">
+        <div class="container-fluid">
+            <th:block th:replace="~{shared/partials/page-title :: page-title(subtitle=#{page.employee.subtitle}, title=#{page.employee.list.title})}"></th:block>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                            <h4 class="card-title mb-0" th:text="#{page.employee.list.card.title}">직원 목록</h4>
+                            <div class="d-flex gap-2 align-items-center">
+                                <select class="form-select form-select-sm w-auto" id="status-filter">
+                                    <option value="" th:text="#{status.all}">전체</option>
+                                    <option value="E" th:text="#{emp.status.working}">재직</option>
+                                    <option value="D" th:text="#{emp.status.resigned}">퇴직</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-secondary" id="btn-refresh"
+                                        th:title="#{btn.refresh}">
+                                    <i class="ti ti-refresh"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary lh-1" id="btn-add">
+                                    <i class="ti ti-plus me-1"></i>
+                                    <span th:text="#{btn.add.employee}">직원 추가</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="table-loading" class="text-center py-4" style="display:none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="ms-2 text-muted" th:text="#{loading.text}">불러오는 중...</span>
+                        </div>
+
+                        <div id="table-error" class="alert alert-danger mx-3 mt-2" style="display:none;">
+                            <i class="ti ti-alert-circle me-1"></i>
+                            <span id="table-error-msg" th:text="#{msg.loadError}">데이터를 불러오지 못했습니다.</span>
+                        </div>
+
+                        <div class="card-body">
+                            <table class="table dt-responsive align-middle mb-0 nowrap" id="emp-list-table">
+                                <thead class="thead-sm text-uppercase fs-xxs">
+                                    <tr>
+                                        <th th:text="#{col.emp.employeeNo}">사번</th>
+                                        <th th:text="#{col.emp.name}">이름</th>
+                                        <th th:text="#{col.emp.position}">직위</th>
+                                        <th th:text="#{col.emp.orgId}">부서</th>
+                                        <th th:text="#{col.emp.startDate}">입사일</th>
+                                        <th th:text="#{col.emp.endDate}">퇴사일</th>
+                                        <th th:text="#{col.emp.status}">재직상태</th>
+                                        <th th:text="#{col.emp.hasUser}">계정연동</th>
+                                        <th class="text-center" style="width:110px;" th:text="#{col.action}">액션</th>
+                                    </tr>
+                                    <tr id="column-search-inputs">
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.emp.employeeNo}" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.emp.name}" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.emp.position}" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.emp.orgId}" type="text"/></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block>
+<th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+</th:block>
+
+<th:block layout:fragment="scripts">
+    <script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.bootstrap5.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.responsive.min.js}"></script>
+    <script th:src="@{/plugins/datatables/responsive.bootstrap5.min.js}"></script>
+
+    <script th:inline="javascript">
+    (function () {
+        'use strict';
+
+        const MSG = /*[[${messages}]]*/ {};
+
+        const table = new DataTable('#emp-list-table', {
+            responsive: true,
+            orderCellsTop: true,
+            language: {
+                emptyTable:  MSG['dt.emptyTable']       || '데이터가 없습니다.',
+                zeroRecords: MSG['dt.zeroRecords']      || '검색 결과가 없습니다.',
+                info:        MSG['dt.info']             || '_START_ - _END_ / _TOTAL_ 건',
+                infoEmpty:   MSG['dt.infoEmpty']        || '0 건',
+                search:      MSG['dt.search']           || '검색:',
+                lengthMenu:  MSG['dt.lengthMenu']       || '_MENU_ 건 보기',
+                paginate: {
+                    previous: MSG['dt.paginate.prev']   || '이전',
+                    next:     MSG['dt.paginate.next']   || '다음'
+                }
+            },
+            columns: [
+                { data: 'employeeNo' },
+                { data: 'name' },
+                { data: 'position',  defaultContent: '-' },
+                { data: 'orgId',     defaultContent: '-' },
+                {
+                    data: 'startDate',
+                    defaultContent: '-',
+                    render: (v) => fmt8(v),
+                    searchable: false
+                },
+                {
+                    data: 'endDate',
+                    defaultContent: '-',
+                    render: (v) => v ? fmt8(v) : '-',
+                    searchable: false
+                },
+                {
+                    data: 'status',
+                    searchable: false,
+                    render: (v) => v === 'E'
+                        ? `<span class="badge badge-soft-success">${MSG['emp.status.working']  || '재직'}</span>`
+                        : `<span class="badge badge-soft-secondary">${MSG['emp.status.resigned'] || '퇴직'}</span>`
+                },
+                {
+                    data: 'hasUser',
+                    searchable: false,
+                    render: (v) => v
+                        ? `<span class="badge badge-soft-primary"><i class="ti ti-link me-1"></i>${MSG['emp.user.linked'] || '연동'}</span>`
+                        : `<span class="badge badge-soft-light text-muted">${MSG['emp.user.none'] || '없음'}</span>`
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    searchable: false,
+                    className: 'text-center',
+                    render: (id) => `
+                        <div class="d-flex justify-content-center gap-1">
+                            <button class="btn btn-icon btn-sm btn-outline-info"    onclick="empAction('view',   '${id}')" title="${MSG['btn.view']   || '보기'}"><i class="ti ti-eye fs-sm"></i></button>
+                            <button class="btn btn-icon btn-sm btn-outline-warning" onclick="empAction('edit',   '${id}')" title="${MSG['btn.edit']   || '수정'}"><i class="ti ti-pencil fs-sm"></i></button>
+                            <button class="btn btn-icon btn-sm btn-outline-danger"  onclick="empAction('delete', '${id}')" title="${MSG['btn.delete'] || '삭제'}"><i class="ti ti-trash fs-sm"></i></button>
+                        </div>`
+                }
+            ],
+            initComplete: function () {
+                this.api().columns([0, 1, 2, 3]).every(function (idx) {
+                    const col = this;
+                    const input = document.querySelector(
+                        `#column-search-inputs th:nth-child(${idx + 1}) input`
+                    );
+                    if (input) {
+                        input.addEventListener('input', function () {
+                            col.search(this.value).draw();
+                        });
+                    }
+                });
+            }
+        });
+
+        function loadEmployees(status) {
+            setLoading(true);
+            hideError();
+            document.querySelectorAll('#column-search-inputs input').forEach(i => i.value = '');
+            table.columns().search('');
+
+            const params = {};
+            if (status) params.status = status;
+
+            axios.get('/api/employees', { params })
+                .then(res => table.clear().rows.add(res.data).draw())
+                .catch(err => {
+                    const msg = err.response?.data?.message || MSG['msg.emp.loadError'] || '직원 목록을 불러오지 못했습니다.';
+                    showError(msg);
+                })
+                .finally(() => setLoading(false));
+        }
+
+        document.getElementById('status-filter').addEventListener('change', function () {
+            loadEmployees(this.value);
+        });
+        document.getElementById('btn-refresh').addEventListener('click', () => {
+            loadEmployees(document.getElementById('status-filter').value);
+        });
+        document.getElementById('btn-add').addEventListener('click', () => {
+            location.href = '/employee/create';
+        });
+
+        window.empAction = function (type, id) {
+            if (type === 'view') {
+                location.href = `/employee/${id}`;
+            } else if (type === 'edit') {
+                location.href = `/employee/${id}/edit`;
+            } else if (type === 'delete') {
+                if (!confirm(MSG['msg.emp.deleteConfirm'] || '해당 직원을 퇴직 처리하시겠습니까?')) return;
+                axios.delete(`/api/employees/${id}`)
+                    .then(() => loadEmployees(document.getElementById('status-filter').value))
+                    .catch(err => alert(err.response?.data?.message || MSG['msg.deleteError'] || '처리에 실패했습니다.'));
+            }
+        };
+
+        function fmt8(s) {
+            if (!s || s.length !== 8) return s || '-';
+            return s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6,8);
+        }
+        function setLoading(show) {
+            document.getElementById('table-loading').style.display = show ? '' : 'none';
+        }
+        function showError(msg) {
+            document.getElementById('table-error-msg').textContent = msg;
+            document.getElementById('table-error').style.display = '';
+        }
+        function hideError() {
+            document.getElementById('table-error').style.display = 'none';
+        }
+
+        loadEmployees('');
+    })();
+    </script>
+</th:block>
+
+</html>

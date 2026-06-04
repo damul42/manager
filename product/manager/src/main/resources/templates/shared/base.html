@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    th:fragment="base(title)">
+
+<head>
+    <script>
+    (function(){
+        var d={"dir":"ltr","skin":"default","theme":"light","width":"fluid","position":"fixed","orientation":"vertical","sidenav-size":"default","sidenav-user":true,"topbar-color":"light","sidenav-color":"dark"};
+        window.defaultConfig=d;
+        window.config=JSON.parse(JSON.stringify(d));
+    })();
+    </script>
+    <th:block th:replace="~{shared/partials/title-meta :: title-meta(title=${title})}" />
+
+    <th:block layout:fragment="styles" />
+
+    <th:block th:replace="~{shared/partials/head-css :: head-css}" />
+</head>
+
+<body>
+
+    <th:block layout:fragment="content" th:remove="tag"></th:block>
+
+    <th:block layout:fragment="scripts" />
+
+</body>
+
+</html>

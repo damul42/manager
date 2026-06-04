@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="footer-scripts">
+<!-- Vendor js -->
+<script th:src="@{/js/vendors.min.js}"></script>
+<!-- App js -->
+<script th:src="@{/js/app.js}"></script>
+<!-- Axios (전역 공유) -->
+<script th:src="@{/js/axios.min.js}"></script>
+<!-- 인증 전역 설정: JWT 헤더 주입 + 401 시 로그인 리다이렉트 -->
+<script>
+(function () {
+    var token = localStorage.getItem('auth_token');
+    if (token) {
+        axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+    }
+    axios.interceptors.response.use(
+        function (res) { return res; },
+        function (err) {
+            if (err.response && err.response.status === 401 &&
+                    location.pathname !== '/login') {
+                location.href = '/login?returnUrl=' +
+                        encodeURIComponent(location.pathname + location.search);
+            }
+            return Promise.reject(err);
+        }
+    );
+})();
+
+window.doLogout = function () {
+    axios.post('/api/auth/logout')
+        .finally(function () {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('password_change_required');
+            location.href = '/login';
+        });
+};
+
+// 비밀번호 변경 강제 체크
+(function () {
+    var path = location.pathname;
+    if (localStorage.getItem('password_change_required') === 'true' &&
+            path !== '/change-password' && path !== '/login') {
+        location.href = '/change-password';
+    }
+})();
+</script>
+</th:block>
+</html>

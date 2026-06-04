@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      th:fragment="base(title)">
+
+<head>
+    <th:block th:replace="~{shared/partials/title-meta :: title-meta(title=${title})}" />
+
+    <th:block layout:fragment="styles"/>
+
+    <th:block th:replace="~{shared/partials/head-css :: head-css}" />
+</head>
+
+<body>
+
+<th:block layout:fragment="preloader" th:remove="tag"></th:block>
+
+<div class="wrapper">
+
+    <th:block th:replace="~{shared/partials/topbar :: topbar}"/>
+    
+    <th:block th:replace="~{shared/partials/sidenav :: sidenav}"/>
+
+    <div class="content-page">
+
+        <div class="container-fluid">
+            <th:block layout:fragment="content" th:remove="tag"></th:block>
+        </div>
+
+        <th:block th:replace="~{shared/partials/footer :: footer}"/>
+
+    </div>
+
+    <th:block layout:fragment="extra-content" th:remove="tag"></th:block>
+
+</div>
+
+<th:block th:replace="~{shared/partials/customizer :: customizer}"/>
+
+<th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"/>
+
+<th:block layout:fragment="scripts"/>
+
+</body>
+
+</html>

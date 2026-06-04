@@ -1,0 +1,75 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{shared/base(title=${'Data Rendering Datatables'})}" >
+
+<th:block layout:fragment="styles">
+<link rel="stylesheet" th:href="@{/plugins/datatables/responsive.bootstrap5.min.css}" type="text/css"/>
+</th:block>
+
+<th:block layout:fragment="content">
+<!-- Begin page -->
+<div class="wrapper">
+<th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block> <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+<!-- ============================================================== -->
+<!-- Start Main Content -->
+<!-- ============================================================== -->
+<div class="content-page">
+<div class="container-fluid">
+<th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='Datatables', title='Data Rendering')}"></th:block>
+<div class="row justify-content-center">
+<div class="col-xxl-10">
+<div class="card">
+<div class="card-header justify-content-between">
+<h4 class="card-title">Example</h4>
+<a class="icon-link icon-link-hover link-primary fw-semibold" href="https://datatables.net/examples/basic_init/data_rendering.html" target="_blank">
+                                        View Docs
+                                        <i class="ti ti-arrow-right bi align-middle fs-lg"></i>
+</a>
+</div>
+<div class="card-body">
+<div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+<strong>Note:</strong>
+                                        This is a jQuery-based plugin, so you need to include jQuery for it to work.
+                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="alert" type="button"></button>
+</div>
+<table class="table table-striped dt-responsive align-middle mb-0" id="datatable-rendering">
+<thead class="thead-sm text-uppercase fs-xxs">
+<tr>
+<th>Name</th>
+<th>Position</th>
+<th>Office</th>
+<th>Progress</th>
+<th>Start date</th>
+<th>Salary</th>
+</tr>
+</thead>
+</table>
+</div>
+<!-- end card-body-->
+</div>
+<!-- end card-->
+</div>
+</div>
+</div>
+<!-- container -->
+<th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+</div>
+<!-- ============================================================== -->
+<!-- End of Main Content -->
+<!-- ============================================================== -->
+</div>
+<!-- END wrapper -->
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block> <th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+<!-- Jquery for Datatables-->
+<!-- Datatables js -->
+<!-- Page js -->
+</th:block>
+
+<th:block layout:fragment="scripts">
+<script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+<script th:src="@{/plugins/datatables/dataTables.min.js}"></script>
+<script th:src="@{/plugins/datatables/dataTables.bootstrap5.min.js}"></script>
+<script th:src="@{/plugins/datatables/dataTables.responsive.min.js}"></script>
+<script th:src="@{/plugins/datatables/responsive.bootstrap5.min.js}"></script>
+<script th:src="@{/js/pages/datatables-rendering.js}"></script>
+</th:block>
+
+</html>
