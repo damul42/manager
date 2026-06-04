@@ -45,8 +45,13 @@ public class UserService {
             return userRepository.findAllWithEmployee()
                     .stream().map(UserListDto::from).toList();
         }
-        return userRepository.search(emailParam, nameParam, statusParam)
+        //return userRepository.search(emailParam, nameParam, statusParam)
+        //        .stream().map(UserListDto::from).toList();
+
+        List<UserListDto> userList = userRepository.search(emailParam, nameParam, statusParam)
                 .stream().map(UserListDto::from).toList();
+
+        return userList;
     }
 
     // ── 상세 ──────────────────────────────────────────────────────────
