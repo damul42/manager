@@ -1,6 +1,7 @@
 package com.hk.mgmt.web;
 
 import com.hk.mgmt.config.JsonMessageSource;
+import com.hk.mgmt.dto.menu.MenuPermission;
 import com.hk.mgmt.dto.menu.ModuleMenuDto;
 import com.hk.mgmt.service.MenuService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,7 +43,7 @@ public class GlobalControllerAdvice {
         try {
             return menuService.getMenu(auth.getName());
         } catch (Exception e) {
-            log.warn("Failed to load sidenav menu for {}: {}", auth.getName(), e.getMessage());
+            log.error("Failed to load sidenav menu for {}", auth.getName(), e);
             return List.of();
         }
     }
@@ -53,6 +54,22 @@ public class GlobalControllerAdvice {
     @ModelAttribute("currentUri")
     public String currentUri(HttpServletRequest request) {
         return request.getRequestURI();
+    }
+
+    /**
+     * 현재 페이지에 해당하는 메뉴 권한을 뷰에 주입한다.
+     * 템플릿에서 th:if="${pagePermission?.write()}" 형태로 버튼 노출 여부를 제어한다.
+     */
+    @ModelAttribute("pagePermission")
+    public MenuPermission pagePermission(HttpServletRequest request) {
+        if (request.getRequestURI().startsWith("/api/")) {
+            return null;
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        return menuService.getPermissionForUrl(auth.getName(), request.getRequestURI()).orElse(null);
     }
 
     /**

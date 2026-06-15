@@ -67,11 +67,12 @@ public class User {
         this.passwordChangeRequired = passwordChangeRequired;
     }
 
-    public static User create(String email, String name, String encodedPassword, String status, Employee employee) {
+    public static User create(String email, String name, String encodedPassword, boolean passwordChangeRequired, String status, Employee employee) {
         return User.builder()
                 .email(email)
                 .name(name)
                 .password(encodedPassword)
+                .passwordChangeRequired(passwordChangeRequired)
                 .status(status)
                 .employee(employee)
                 .build();

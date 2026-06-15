@@ -3,8 +3,9 @@ package com.hk.mgmt.controller.api;
 import com.hk.mgmt.dto.auth.ChangePasswordRequest;
 import com.hk.mgmt.dto.auth.LoginRequest;
 import com.hk.mgmt.dto.auth.LoginResponse;
+import com.hk.mgmt.dto.auth.TokenRefreshRequest;
+import com.hk.mgmt.dto.auth.TokenRefreshResponse;
 import com.hk.mgmt.service.AuthService;
-import com.hk.mgmt.service.MenuService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -23,11 +24,15 @@ import java.security.Principal;
 public class AuthApiController {
 
     private final AuthService authService;
-    private final MenuService menuService;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenRefreshResponse> refresh(@Valid @RequestBody TokenRefreshRequest request) {
+        return ResponseEntity.ok(authService.refresh(request));
     }
 
     @PutMapping("/change-password")
@@ -41,7 +46,7 @@ public class AuthApiController {
     public ResponseEntity<Void> logout(HttpServletResponse response) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
-            menuService.invalidateCache(auth.getName());
+            authService.logout(auth.getName());
         }
 
         Cookie cookie = new Cookie("auth_token", null);

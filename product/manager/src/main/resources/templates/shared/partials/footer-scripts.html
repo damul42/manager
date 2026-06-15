@@ -7,43 +7,120 @@
 <script th:src="@{/js/app.js}"></script>
 <!-- Axios (전역 공유) -->
 <script th:src="@{/js/axios.min.js}"></script>
-<!-- 인증 전역 설정: JWT 헤더 주입 + 401 시 로그인 리다이렉트 -->
+<!-- 인증 전역 설정: JWT 헤더 주입 + 토큰 자동 갱신 + 401 처리 -->
 <script>
 (function () {
+
+    // ── Access Token 헤더 초기 세팅 ──────────────────────────────────
     var token = localStorage.getItem('auth_token');
     if (token) {
         axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
     }
+
+    // ── 토큰 갱신 대기 큐 ────────────────────────────────────────────
+    var isRefreshing = false;
+    var pendingQueue = [];
+
+    function drainQueue(err, newToken) {
+        pendingQueue.forEach(function (p) {
+            if (err) p.reject(err);
+            else p.resolve(newToken);
+        });
+        pendingQueue = [];
+    }
+
+    // ── 인증 정보 전체 삭제 후 로그인 리다이렉트 ─────────────────────
+    function clearAuthAndRedirect(withReturnUrl) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('password_change_required');
+        document.cookie = 'auth_token=; max-age=0; path=/';
+        if (withReturnUrl) {
+            location.href = '/login?returnUrl=' + encodeURIComponent(location.pathname + location.search);
+        } else {
+            location.href = '/login';
+        }
+    }
+
+    // ── 응답 인터셉터: 401 시 토큰 자동 갱신 ────────────────────────
     axios.interceptors.response.use(
         function (res) { return res; },
         function (err) {
-            if (err.response && err.response.status === 401 &&
-                    location.pathname !== '/login') {
-                location.href = '/login?returnUrl=' +
-                        encodeURIComponent(location.pathname + location.search);
+            var original = err.config;
+
+            // 401이 아니거나 로그인 페이지이면 그대로 전파
+            if (!err.response || err.response.status !== 401 || location.pathname === '/login') {
+                return Promise.reject(err);
             }
-            return Promise.reject(err);
+
+            // /api/auth/refresh 자체가 실패한 경우 → 로그인으로
+            if (original.url && original.url.indexOf('/api/auth/refresh') !== -1) {
+                clearAuthAndRedirect(false);
+                return Promise.reject(err);
+            }
+
+            // 다른 갱신이 진행 중이면 완료될 때까지 대기 후 재시도
+            if (isRefreshing) {
+                return new Promise(function (resolve, reject) {
+                    pendingQueue.push({ resolve: resolve, reject: reject });
+                }).then(function (newToken) {
+                    original.headers = original.headers || {};
+                    original.headers['Authorization'] = 'Bearer ' + newToken;
+                    return axios(original);
+                }).catch(function (e) { return Promise.reject(e); });
+            }
+
+            var refreshToken = localStorage.getItem('refresh_token');
+            if (!refreshToken) {
+                clearAuthAndRedirect(true);
+                return Promise.reject(err);
+            }
+
+            isRefreshing = true;
+
+            return axios.post('/api/auth/refresh', { refreshToken: refreshToken })
+                .then(function (res) {
+                    var newAccess  = res.data.accessToken;
+                    var newRefresh = res.data.refreshToken;
+
+                    localStorage.setItem('auth_token', newAccess);
+                    if (newRefresh) localStorage.setItem('refresh_token', newRefresh);
+                    document.cookie = 'auth_token=' + newAccess + '; path=/; SameSite=Strict';
+                    axios.defaults.headers.common['Authorization'] = 'Bearer ' + newAccess;
+
+                    drainQueue(null, newAccess);
+
+                    original.headers = original.headers || {};
+                    original.headers['Authorization'] = 'Bearer ' + newAccess;
+                    return axios(original);
+                })
+                .catch(function (e) {
+                    drainQueue(e, null);
+                    clearAuthAndRedirect(true);
+                    return Promise.reject(e);
+                })
+                .finally(function () { isRefreshing = false; });
         }
     );
-})();
 
-window.doLogout = function () {
-    axios.post('/api/auth/logout')
-        .finally(function () {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_id');
-            localStorage.removeItem('password_change_required');
-            location.href = '/login';
-        });
-};
+    // ── 로그아웃 ─────────────────────────────────────────────────────
+    window.doLogout = function () {
+        axios.post('/api/auth/logout')
+            .finally(function () {
+                clearAuthAndRedirect(false);
+            });
+    };
 
-// 비밀번호 변경 강제 체크
-(function () {
-    var path = location.pathname;
-    if (localStorage.getItem('password_change_required') === 'true' &&
-            path !== '/change-password' && path !== '/login') {
-        location.href = '/change-password';
-    }
+    // ── 비밀번호 변경 강제 체크 ──────────────────────────────────────
+    (function () {
+        var path = location.pathname;
+        if (localStorage.getItem('password_change_required') === 'true' &&
+                path !== '/change-password' && path !== '/login') {
+            location.href = '/change-password';
+        }
+    })();
+
 })();
 </script>
 </th:block>

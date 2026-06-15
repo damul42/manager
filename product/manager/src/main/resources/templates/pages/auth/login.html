@@ -72,7 +72,7 @@ Manager
     'use strict';
 
     const params    = new URLSearchParams(location.search);
-    const returnUrl = params.get('returnUrl') || '/pages/user/list';
+    const returnUrl = params.get('returnUrl') || '/user/list';
 
     // ── 비밀번호 표시 토글 ─────────────────────────────────────────────
     document.getElementById('btn-toggle-pw').addEventListener('click', function () {
@@ -115,8 +115,9 @@ Manager
         axios.post('/api/auth/login', { email, password })
             .then(function (res) {
                 const token = res.data.accessToken;
-                localStorage.setItem('auth_token', token);
-                localStorage.setItem('user_id', res.data.userId);
+                localStorage.setItem('auth_token',              token);
+                localStorage.setItem('refresh_token',           res.data.refreshToken);
+                localStorage.setItem('user_id',                 res.data.userId);
                 localStorage.setItem('password_change_required', String(res.data.passwordChangeRequired));
                 document.cookie = 'auth_token=' + token + '; path=/; SameSite=Strict';
                 location.href = res.data.passwordChangeRequired ? '/change-password' : returnUrl;

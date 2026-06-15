@@ -26,9 +26,12 @@
 </div>
 <div class="p-2 text-center mt-auto">
 <div class="error-glitch" data-text="403">403</div>
-<h3 class="fw-bold text-uppercase">Forbidden</h3>
-<p class="text-muted">You don't have permission to access this resource.</p>
-<button class="btn btn-primary mt-3 rounded-pill" onclick="window.location.href = 'index.html'">Go Home</button>
+<h3 class="fw-bold text-uppercase">접근 권한 없음</h3>
+<p class="text-muted">해당 페이지에 접근할 권한이 없습니다.</p>
+<div class="d-flex justify-content-center gap-2 mt-3">
+    <button class="btn btn-outline-secondary rounded-pill" onclick="history.back()">이전 페이지</button>
+    <a class="btn btn-primary rounded-pill" th:href="@{/}">홈으로</a>
+</div>
 </div>
 <p class="text-center text-muted mt-auto mb-0">
                                 ©

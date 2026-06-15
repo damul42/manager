@@ -85,9 +85,18 @@ public class UserApiController {
             @RequestParam(required = false) String name,
 
             @Parameter(description = "상태 필터", schema = @Schema(allowableValues = {"E", "D"}))
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
 
-        return ResponseEntity.ok(userService.getList(email, name, status));
+            @Parameter(description = "직원연동 여부", schema = @Schema(allowableValues = {"Y", "N"}))
+            @RequestParam(required = false) String hasEmployee,
+
+            @Parameter(description = "등록일 시작 (YYYY-MM-DD)")
+            @RequestParam(required = false) String dateFrom,
+
+            @Parameter(description = "등록일 종료 (YYYY-MM-DD)")
+            @RequestParam(required = false) String dateTo) {
+
+        return ResponseEntity.ok(userService.getList(email, name, status, hasEmployee, dateFrom, dateTo));
     }
 
     // ── 상세 조회 ──────────────────────────────────────────────────────

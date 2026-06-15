@@ -16,10 +16,10 @@
                     <i class="ti ti-arrow-left me-1"></i>목록
                 </a>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-outline-warning" id="btn-edit" type="button">
+                    <button th:if="${pagePermission?.write()}" class="btn btn-sm btn-outline-warning" id="btn-edit" type="button">
                         <i class="ti ti-pencil me-1"></i>수정
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" id="btn-delete" type="button">
+                    <button th:if="${pagePermission?.write()}" class="btn btn-sm btn-outline-danger" id="btn-delete" type="button">
                         <i class="ti ti-trash me-1"></i>삭제
                     </button>
                 </div>
@@ -174,11 +174,11 @@
     }
 
     // ── 버튼 이벤트 ───────────────────────────────────────────────────
-    document.getElementById('btn-edit').addEventListener('click', () => {
+    document.getElementById('btn-edit')?.addEventListener('click', () => {
         location.href = `/module/${moduleId}/edit`;
     });
 
-    document.getElementById('btn-delete').addEventListener('click', () => {
+    document.getElementById('btn-delete')?.addEventListener('click', () => {
         if (!confirm('해당 모듈을 비활성화(삭제)하시겠습니까?')) return;
         axios.delete(`/api/modules/${moduleId}`)
             .then(() => location.href = listUrl)

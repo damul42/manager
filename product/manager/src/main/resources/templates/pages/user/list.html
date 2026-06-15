@@ -3,6 +3,7 @@
 
 <th:block layout:fragment="styles">
     <link rel="stylesheet" th:href="@{/plugins/datatables/responsive.bootstrap5.min.css}" type="text/css"/>
+    <link rel="stylesheet" th:href="@{/plugins/daterangepicker/daterangepicker.css}" type="text/css"/>
 </th:block>
 
 <th:block layout:fragment="content">
@@ -24,7 +25,7 @@
                                         th:title="#{btn.refresh}">
                                     <i class="ti ti-refresh"></i>
                                 </button>
-                                <button class="btn btn-sm btn-primary lh-1" id="btn-add">
+                                <button th:if="${pagePermission?.write()}" class="btn btn-sm btn-primary lh-1" id="btn-add">
                                     <i class="ti ti-plus me-1"></i>
                                     <span th:text="#{btn.add.user}">사용자 추가</span>
                                 </button>
@@ -61,9 +62,26 @@
                                         <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.name}" type="text"/></th>
                                         <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.empNo}" type="text"/></th>
                                         <th><input class="form-control form-control-sm bg-light-subtle border-light" th:placeholder="#{search.dept}" type="text"/></th>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
+                                        <th>
+                                            <select class="form-select form-select-sm bg-light-subtle border-light" id="emp-filter">
+                                                <option value="">전체</option>
+                                                <option value="Y">있음</option>
+                                                <option value="N">없음</option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <select class="form-select form-select-sm bg-light-subtle border-light" id="status-filter">
+                                                <option value="">전체</option>
+                                                <option th:each="c : ${codes.get('USER_STATUS')}"
+                                                        th:value="${c.codeId}"
+                                                        th:text="${c.codeValue}">
+                                                </option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <input class="form-control form-control-sm bg-light-subtle border-light" id="date-range-filter"
+                                                   type="text" placeholder="등록일 범위" readonly style="min-width:160px;cursor:pointer;"/>
+                                        </th>
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -88,6 +106,8 @@
     <script th:src="@{/plugins/datatables/dataTables.bootstrap5.min.js}"></script>
     <script th:src="@{/plugins/datatables/dataTables.responsive.min.js}"></script>
     <script th:src="@{/plugins/datatables/responsive.bootstrap5.min.js}"></script>
+    <script th:src="@{/plugins/moment/moment.min.js}"></script>
+    <script th:src="@{/plugins/daterangepicker/daterangepicker.js}"></script>
 
     <script th:inline="javascript">
     (function () {
@@ -95,6 +115,18 @@
 
         // ── 서버에서 주입된 메시지 맵 ─────────────────────────────────
         const MSG = /*[[${messages}]]*/ {};
+
+        // ── 현재 페이지 권한 ──────────────────────────────────────────
+        const CAN_READ  = /*[[${pagePermission != null && pagePermission.read()}]]*/ false;
+        const CAN_WRITE = /*[[${pagePermission != null && pagePermission.write()}]]*/ false;
+
+        // ── 코드 캐시에서 주입된 사용자 상태 맵 (codeId → {label, cls}) ──
+        // tbl_sys_code의 USER_STATUS 카테고리에서 자동 로딩.
+        // refString1: badge 색상 variant (success, danger, warning, ...)
+        const USER_STATUS = Object.fromEntries(
+            (/*[[${codes.get('USER_STATUS')}]]*/ [])
+                .map(c => [c.codeId, { label: c.codeValue, cls: c.refString1 || 'secondary' }])
+        );
 
         // ── DataTable 초기화 ──────────────────────────────────────────
         const table = new DataTable('#user-list-table', {
@@ -119,6 +151,7 @@
                 { data: 'orgId',       defaultContent: '-' },
                 {
                     data: 'hasEmployee',
+                    className: 'text-center',
                     render: (v) => v
                         ? `<span class="badge badge-soft-primary"><i class="ti ti-link me-1"></i>${MSG['emp.linked'] || '연동'}</span>`
                         : `<span class="badge badge-soft-secondary">${MSG['emp.none'] || '없음'}</span>`,
@@ -126,9 +159,13 @@
                 },
                 {
                     data: 'status',
-                    render: (v) => v === 'E'
-                        ? `<span class="badge badge-soft-success">${MSG['status.active'] || '활성'}</span>`
-                        : `<span class="badge badge-soft-danger">${MSG['status.inactive'] || '비활성'}</span>`,
+                    className: 'text-center',
+                    render: (v) => {
+                        const c = USER_STATUS[v];
+                        return c
+                            ? `<span class="badge badge-soft-${c.cls}">${c.label}</span>`
+                            : `<span class="badge badge-soft-secondary">${v || '-'}</span>`;
+                    },
                     searchable: false
                 },
                 {
@@ -141,18 +178,13 @@
                     orderable: false,
                     searchable: false,
                     className: 'text-center',
-                    render: (id) => `
-                        <div class="d-flex justify-content-center gap-1">
-                            <button class="btn btn-icon btn-sm btn-outline-info"    onclick="userAction('view',   '${id}')" title="${MSG['btn.view']   || '보기'}">
-                                <i class="ti ti-eye fs-sm"></i>
-                            </button>
-                            <button class="btn btn-icon btn-sm btn-outline-warning" onclick="userAction('edit',   '${id}')" title="${MSG['btn.edit']   || '수정'}">
-                                <i class="ti ti-pencil fs-sm"></i>
-                            </button>
-                            <button class="btn btn-icon btn-sm btn-outline-danger"  onclick="userAction('delete', '${id}')" title="${MSG['btn.delete'] || '삭제'}">
-                                <i class="ti ti-trash fs-sm"></i>
-                            </button>
-                        </div>`
+                    render: (id) => {
+                        const btns = [];
+                        if (CAN_READ)  btns.push(`<button class="btn btn-icon btn-sm btn-outline-info"    onclick="userAction('view',   '${id}')" title="${MSG['btn.view']   || '보기'}"><i class="ti ti-eye fs-sm"></i></button>`);
+                        if (CAN_WRITE) btns.push(`<button class="btn btn-icon btn-sm btn-outline-warning" onclick="userAction('edit',   '${id}')" title="${MSG['btn.edit']   || '수정'}"><i class="ti ti-pencil fs-sm"></i></button>`);
+                        if (CAN_WRITE) btns.push(`<button class="btn btn-icon btn-sm btn-outline-danger"  onclick="userAction('delete', '${id}')" title="${MSG['btn.delete'] || '삭제'}"><i class="ti ti-trash fs-sm"></i></button>`);
+                        return `<div class="d-flex justify-content-center gap-1">${btns.join('')}</div>`;
+                    }
                 }
             ],
             initComplete: function () {
@@ -170,15 +202,48 @@
             }
         });
 
+        // ── 날짜 범위 상태 변수 ───────────────────────────────────────
+        let filterDateFrom = '', filterDateTo = '';
+
+        // ── DateRangePicker 초기화 ────────────────────────────────────
+        $('#date-range-filter').daterangepicker({
+            autoUpdateInput: false,
+            locale: {
+                format: 'YYYY-MM-DD', cancelLabel: '초기화', applyLabel: '적용',
+                daysOfWeek: ['일','월','화','수','목','금','토'],
+                monthNames: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월']
+            }
+        });
+        $('#date-range-filter').on('apply.daterangepicker', function (ev, picker) {
+            filterDateFrom = picker.startDate.format('YYYY-MM-DD');
+            filterDateTo   = picker.endDate.format('YYYY-MM-DD');
+            //$(this).val(filterDateFrom + ' ~ ' + filterDateTo);
+            loadUsers();
+            $(this).val(filterDateFrom + ' ~ ' + filterDateTo);
+        });
+        $('#date-range-filter').on('cancel.daterangepicker', function () {
+            filterDateFrom = '';
+            filterDateTo   = '';
+            //$(this).val('');
+            loadUsers();
+            $(this).val('');
+        });
+
         // ── 데이터 로드 (Axios) ───────────────────────────────────────
-        function loadUsers(status) {
+        function loadUsers() {
             setLoading(true);
             hideError();
             document.querySelectorAll('#column-search-inputs input').forEach(i => i.value = '');
             table.columns().search('');
 
+            const status      = document.getElementById('status-filter').value;
+            const hasEmployee = document.getElementById('emp-filter').value;
+
             const params = {};
-            if (status) params.status = status;
+            if (status)        params.status      = status;
+            if (hasEmployee)   params.hasEmployee  = hasEmployee;
+            if (filterDateFrom) params.dateFrom    = filterDateFrom;
+            if (filterDateTo)   params.dateTo      = filterDateTo;
 
             axios.get('/api/users', { params })
                 .then(res => table.clear().rows.add(res.data).draw())
@@ -189,18 +254,15 @@
                 .finally(() => setLoading(false));
         }
 
-        // ── 상태 필터 ─────────────────────────────────────────────────
-        document.getElementById('status-filter').addEventListener('change', function () {
-            loadUsers(this.value);
-        });
+        // ── 서버 필터 변경 이벤트 ─────────────────────────────────────
+        document.getElementById('status-filter').addEventListener('change', loadUsers);
+        document.getElementById('emp-filter').addEventListener('change', loadUsers);
 
         // ── 새로고침 ──────────────────────────────────────────────────
-        document.getElementById('btn-refresh').addEventListener('click', () => {
-            loadUsers(document.getElementById('status-filter').value);
-        });
+        document.getElementById('btn-refresh').addEventListener('click', loadUsers);
 
-        // ── 추가 버튼 ─────────────────────────────────────────────────
-        document.getElementById('btn-add').addEventListener('click', () => {
+        // ── 추가 버튼 (write 권한 없으면 렌더링되지 않음) ────────────
+        document.getElementById('btn-add')?.addEventListener('click', () => {
             location.href = '/user/create';
         });
 
@@ -213,7 +275,7 @@
             } else if (type === 'delete') {
                 if (!confirm(MSG['msg.deleteConfirm'] || '해당 사용자를 삭제하시겠습니까?')) return;
                 axios.delete(`/api/users/${id}`)
-                    .then(() => loadUsers(document.getElementById('status-filter').value))
+                    .then(() => loadUsers())
                     .catch(err => alert(err.response?.data?.message || MSG['msg.deleteError'] || '삭제에 실패했습니다.'));
             }
         };
@@ -231,7 +293,7 @@
         }
 
         // ── 최초 로드 ─────────────────────────────────────────────────
-        loadUsers('');
+        loadUsers();
     })();
     </script>
 </th:block>

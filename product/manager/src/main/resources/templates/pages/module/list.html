@@ -23,7 +23,7 @@
                                 <button class="btn btn-sm btn-outline-secondary" id="btn-refresh" title="새로고침">
                                     <i class="ti ti-refresh"></i>
                                 </button>
-                                <button class="btn btn-sm btn-primary lh-1" id="btn-add">
+                                <button th:if="${pagePermission?.write()}" class="btn btn-sm btn-primary lh-1" id="btn-add">
                                     <i class="ti ti-plus me-1"></i>모듈 추가
                                 </button>
                             </div>
@@ -48,7 +48,7 @@
                                         <th>URL</th>
                                         <th>아이콘</th>
                                         <th>비고</th>
-                                        <th>상태</th>
+                                        <th class="text-center">상태</th>
                                         <th class="text-center" style="width:120px;">액션</th>
                                     </tr>
                                     <tr id="column-search-inputs">
@@ -57,7 +57,13 @@
                                         <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="URL" type="text"/></th>
                                         <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="아이콘" type="text"/></th>
                                         <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="비고" type="text"/></th>
-                                        <th></th>
+                                        <th>
+                                            <select class="form-select form-select-sm bg-light-subtle border-light" id="status-filter">
+                                                <option value="">전체</option>
+                                                <option value="E">활성</option>
+                                                <option value="D">비활성</option>
+                                            </select>
+                                        </th>
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -82,13 +88,16 @@
     <script th:src="@{/plugins/datatables/dataTables.bootstrap5.min.js}"></script>
     <script th:src="@{/plugins/datatables/dataTables.responsive.min.js}"></script>
     <script th:src="@{/plugins/datatables/responsive.bootstrap5.min.js}"></script>
-    <script th:src="@{/js/axios.min.js}"></script>
 
     <script th:inline="javascript">
     (function () {
         'use strict';
 
         const MSG = /*[[${messages}]]*/ {};
+
+        // ── 현재 페이지 권한 ──────────────────────────────────────────
+        const CAN_READ  = /*[[${pagePermission != null && pagePermission.read()}]]*/ false;
+        const CAN_WRITE = /*[[${pagePermission != null && pagePermission.write()}]]*/ false;
 
         // ── DataTable 초기화 ──────────────────────────────────────────
         const table = new DataTable('#module-list-table', {
@@ -120,37 +129,26 @@
                 { data: 'remark', defaultContent: '-' },
                 {
                     data: 'status',
+                    className: 'text-center',
                     searchable: false,
                     render: (v) => v === 'E'
-                        ? `<span class="badge badge-soft-success">${MSG['status.active']   || '활성'}</span>`
-                        : `<span class="badge badge-soft-danger">${MSG['status.inactive']  || '비활성'}</span>`
+                        ? `<span class="badge badge-soft-success">${MSG['status.active']  || '활성'}</span>`
+                        : `<span class="badge badge-soft-danger">${MSG['status.inactive'] || '비활성'}</span>`
                 },
                 {
                     data: 'id',
                     orderable: false,
                     searchable: false,
                     className: 'text-center',
-                    render: (id) => `
-                        <div class="d-flex justify-content-center gap-1">
-                            <button class="btn btn-icon btn-sm btn-outline-info"
-                                    onclick="moduleAction('view','${id}')"
-                                    title="${MSG['btn.view'] || '보기'}">
-                                <i class="ti ti-eye fs-sm"></i>
-                            </button>
-                            <button class="btn btn-icon btn-sm btn-outline-warning"
-                                    onclick="moduleAction('edit','${id}')"
-                                    title="${MSG['btn.edit'] || '수정'}">
-                                <i class="ti ti-pencil fs-sm"></i>
-                            </button>
-                            <button class="btn btn-icon btn-sm btn-outline-danger"
-                                    onclick="moduleAction('delete','${id}')"
-                                    title="${MSG['btn.delete'] || '삭제'}">
-                                <i class="ti ti-trash fs-sm"></i>
-                            </button>
-                        </div>`
+                    render: (id) => {
+                        const btns = [];
+                        if (CAN_READ)  btns.push(`<button class="btn btn-icon btn-sm btn-outline-info"    onclick="moduleAction('view',  '${id}')" title="${MSG['btn.view']   || '보기'}"><i class="ti ti-eye fs-sm"></i></button>`);
+                        if (CAN_WRITE) btns.push(`<button class="btn btn-icon btn-sm btn-outline-warning" onclick="moduleAction('edit',  '${id}')" title="${MSG['btn.edit']   || '수정'}"><i class="ti ti-pencil fs-sm"></i></button>`);
+                        if (CAN_WRITE) btns.push(`<button class="btn btn-icon btn-sm btn-outline-danger"  onclick="moduleAction('delete','${id}')" title="${MSG['btn.delete'] || '삭제'}"><i class="ti ti-trash fs-sm"></i></button>`);
+                        return `<div class="d-flex justify-content-center gap-1">${btns.join('')}</div>`;
+                    }
                 }
             ],
-            // ── 컬럼 검색 입력 연결 ────────────────────────────────────
             initComplete: function () {
                 this.api().columns([0, 1, 2, 3, 4]).every(function (idx) {
                     const col = this;
@@ -167,13 +165,13 @@
         });
 
         // ── 데이터 로드 ───────────────────────────────────────────────
-        function loadModules(status) {
+        function loadModules() {
             setLoading(true);
             hideError();
-            // 컬럼 검색 초기화
             document.querySelectorAll('#column-search-inputs input').forEach(i => i.value = '');
             table.columns().search('');
 
+            const status = document.getElementById('status-filter').value;
             const params = {};
             if (status) params.status = status;
 
@@ -187,13 +185,9 @@
         }
 
         // ── 이벤트 ───────────────────────────────────────────────────
-        document.getElementById('status-filter').addEventListener('change', function () {
-            loadModules(this.value);
-        });
-        document.getElementById('btn-refresh').addEventListener('click', () => {
-            loadModules(document.getElementById('status-filter').value);
-        });
-        document.getElementById('btn-add').addEventListener('click', () => {
+        document.getElementById('status-filter').addEventListener('change', loadModules);
+        document.getElementById('btn-refresh').addEventListener('click', loadModules);
+        document.getElementById('btn-add')?.addEventListener('click', () => {
             location.href = '/module/create';
         });
 
@@ -205,7 +199,7 @@
             } else if (type === 'delete') {
                 if (!confirm(MSG['msg.deleteConfirm'] || '해당 모듈을 삭제하시겠습니까?')) return;
                 axios.delete(`/api/modules/${id}`)
-                    .then(() => loadModules(document.getElementById('status-filter').value))
+                    .then(() => loadModules())
                     .catch(err => alert(err.response?.data?.message || MSG['msg.deleteError'] || '삭제에 실패했습니다.'));
             }
         };
@@ -221,7 +215,7 @@
             document.getElementById('table-error').style.display = 'none';
         }
 
-        loadModules('');
+        loadModules();
     })();
     </script>
 </th:block>

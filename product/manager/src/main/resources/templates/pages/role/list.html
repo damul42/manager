@@ -23,7 +23,7 @@
                                 <button class="btn btn-sm btn-outline-secondary" id="btn-refresh" title="새로고침">
                                     <i class="ti ti-refresh"></i>
                                 </button>
-                                <button class="btn btn-sm btn-primary lh-1" id="btn-add">
+                                <button th:if="${pagePermission?.write()}" class="btn btn-sm btn-primary lh-1" id="btn-add">
                                     <i class="ti ti-plus me-1"></i>역할 추가
                                 </button>
                             </div>
@@ -84,6 +84,10 @@
 
         const MSG = /*[[${messages}]]*/ {};
 
+        // ── 현재 페이지 권한 ──────────────────────────────────────────
+        const CAN_READ  = /*[[${pagePermission != null && pagePermission.read()}]]*/ false;
+        const CAN_WRITE = /*[[${pagePermission != null && pagePermission.write()}]]*/ false;
+
         const table = new DataTable('#role-list-table', {
             responsive: true,
             orderCellsTop: true,
@@ -112,24 +116,13 @@
                     orderable: false,
                     searchable: false,
                     className: 'text-center',
-                    render: (id) => `
-                        <div class="d-flex justify-content-center gap-1">
-                            <button class="btn btn-icon btn-sm btn-outline-info"
-                                    onclick="roleAction('view','${id}')"
-                                    title="${MSG['btn.view'] || '보기'}">
-                                <i class="ti ti-eye fs-sm"></i>
-                            </button>
-                            <button class="btn btn-icon btn-sm btn-outline-warning"
-                                    onclick="roleAction('edit','${id}')"
-                                    title="${MSG['btn.edit'] || '수정'}">
-                                <i class="ti ti-pencil fs-sm"></i>
-                            </button>
-                            <button class="btn btn-icon btn-sm btn-outline-danger"
-                                    onclick="roleAction('delete','${id}')"
-                                    title="${MSG['btn.delete'] || '삭제'}">
-                                <i class="ti ti-trash fs-sm"></i>
-                            </button>
-                        </div>`
+                    render: (id) => {
+                        const btns = [];
+                        if (CAN_READ)  btns.push(`<button class="btn btn-icon btn-sm btn-outline-info"    onclick="roleAction('view',  '${id}')" title="${MSG['btn.view']   || '보기'}"><i class="ti ti-eye fs-sm"></i></button>`);
+                        if (CAN_WRITE) btns.push(`<button class="btn btn-icon btn-sm btn-outline-warning" onclick="roleAction('edit',  '${id}')" title="${MSG['btn.edit']   || '수정'}"><i class="ti ti-pencil fs-sm"></i></button>`);
+                        if (CAN_WRITE) btns.push(`<button class="btn btn-icon btn-sm btn-outline-danger"  onclick="roleAction('delete','${id}')" title="${MSG['btn.delete'] || '삭제'}"><i class="ti ti-trash fs-sm"></i></button>`);
+                        return `<div class="d-flex justify-content-center gap-1">${btns.join('')}</div>`;
+                    }
                 }
             ],
             initComplete: function () {
@@ -163,7 +156,7 @@
         }
 
         document.getElementById('btn-refresh').addEventListener('click', loadRoles);
-        document.getElementById('btn-add').addEventListener('click', () => {
+        document.getElementById('btn-add')?.addEventListener('click', () => {
             location.href = '/role/create';
         });
 

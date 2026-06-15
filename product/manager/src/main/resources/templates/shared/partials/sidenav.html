@@ -76,7 +76,7 @@
             - 현재 URI가 하위 메뉴 중 하나와 일치하면 자동 펼침(show) 및 active 표시
         -->
         <li class="side-nav-item" th:if="${not #lists.isEmpty(module.menus())}">
-            <th:block th:with="isActive=${not module.menus().?[url() != null and url() == currentUri].isEmpty()}">
+            <th:block th:with="isActive=${module.menus().![url()].contains(currentUri)}">
             <a class="side-nav-link"
                th:classappend="${isActive} ? 'active'"
                data-bs-toggle="collapse"

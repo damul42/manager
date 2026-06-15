@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -36,22 +38,19 @@ public class UserService {
 
     // ── 목록 ──────────────────────────────────────────────────────────
 
-    public List<UserListDto> getList(String email, String name, String status) {
-        String emailParam  = StringUtils.hasText(email)  ? email  : null;
-        String nameParam   = StringUtils.hasText(name)   ? name   : null;
-        String statusParam = StringUtils.hasText(status) ? status : null;
+    public List<UserListDto> getList(String email, String name, String status,
+                                     String hasEmployee, String dateFrom, String dateTo) {
+        String emailParam       = StringUtils.hasText(email)       ? email       : null;
+        String nameParam        = StringUtils.hasText(name)        ? name        : null;
+        String statusParam      = StringUtils.hasText(status)      ? status      : null;
+        String hasEmployeeParam = StringUtils.hasText(hasEmployee) ? hasEmployee : null;
+        LocalDateTime dateFromParam = StringUtils.hasText(dateFrom)
+                ? LocalDate.parse(dateFrom).atStartOfDay() : null;
+        LocalDateTime dateToParam   = StringUtils.hasText(dateTo)
+                ? LocalDate.parse(dateTo).atTime(23, 59, 59) : null;
 
-        if (emailParam == null && nameParam == null && statusParam == null) {
-            return userRepository.findAllWithEmployee()
-                    .stream().map(UserListDto::from).toList();
-        }
-        //return userRepository.search(emailParam, nameParam, statusParam)
-        //        .stream().map(UserListDto::from).toList();
-
-        List<UserListDto> userList = userRepository.search(emailParam, nameParam, statusParam)
+        return userRepository.search(emailParam, nameParam, statusParam, hasEmployeeParam, dateFromParam, dateToParam)
                 .stream().map(UserListDto::from).toList();
-
-        return userList;
     }
 
     // ── 상세 ──────────────────────────────────────────────────────────
@@ -69,6 +68,7 @@ public class UserService {
         var user = userRepository.findWithEmployeeById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found: " + id));
 
+        boolean becomingInactive = "D".equals(req.status()) && !"D".equals(user.getStatus());
         user.updateProfile(req.name(), req.status());
 
         if (StringUtils.hasText(req.newPassword())) {
@@ -76,6 +76,10 @@ public class UserService {
                 throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
             }
             user.changePassword(passwordEncoder.encode(req.newPassword()));
+        }
+
+        if (becomingInactive) {
+            menuService.invalidateCache(user.getEmail());
         }
 
         return UserDetailDto.from(user);
@@ -99,7 +103,7 @@ public class UserService {
         }
 
         String status = StringUtils.hasText(req.status()) ? req.status() : "E";
-        User user = User.create(req.email(), req.name(), passwordEncoder.encode(req.password()), status, employee);
+        User user = User.create(req.email(), req.name(), passwordEncoder.encode(req.password()), false, status, employee);
         userRepository.save(user);
         return UserDetailDto.from(user);
     }
@@ -153,5 +157,6 @@ public class UserService {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found: " + id));
         user.changeStatus("D");
+        menuService.invalidateCache(user.getEmail());
     }
 }

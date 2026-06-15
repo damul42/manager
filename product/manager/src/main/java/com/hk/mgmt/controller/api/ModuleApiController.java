@@ -87,10 +87,13 @@ public class ModuleApiController {
     })
     @GetMapping
     public ResponseEntity<List<ModuleListDto>> list(
+            @Parameter(description = "모듈명 (부분 일치)")
+            @RequestParam(required = false) String name,
+
             @Parameter(description = "상태 필터", schema = @Schema(allowableValues = {"E", "D"}))
             @RequestParam(required = false) String status) {
 
-        return ResponseEntity.ok(moduleService.getList(status));
+        return ResponseEntity.ok(moduleService.getList(name, status));
     }
 
     // ── 상세 조회 ──────────────────────────────────────────────────────

@@ -49,6 +49,8 @@ public class MenuService {
      */
     public void buildAndCache(String userId, String email) {
         List<ModuleMenuDto> menu = buildMenuTree(userId);
+        log.info("Menu built for {}: {} modules, {} total menus",
+                email, menu.size(), menu.stream().mapToLong(m -> m.menus().size()).sum());
         cache(email, menu);
     }
 
@@ -59,13 +61,18 @@ public class MenuService {
         String json = redisTemplate.opsForValue().get(KEY_PREFIX + email);
         if (json != null) {
             try {
-                return objectMapper.readValue(json, new TypeReference<>() {});
+                List<ModuleMenuDto> cached = objectMapper.readValue(json, new TypeReference<>() {});
+                if (cached != null) return cached;
+                // Redis에 JSON null("null" 리터럴)이 저장된 경우 — 오염된 캐시 제거 후 재빌드
+                log.warn("Stale null cache detected for menu:{}, rebuilding", email);
+                redisTemplate.delete(KEY_PREFIX + email);
             } catch (JsonProcessingException e) {
                 log.error("Failed to deserialize menu cache for {}", email, e);
+                redisTemplate.delete(KEY_PREFIX + email);
             }
         }
 
-        // 캐시 미스 (Redis 재시작 등) — DB에서 재조회 후 캐싱
+        // 캐시 미스 또는 오염된 캐시 — DB에서 재조회 후 캐싱
         return userRepository.findByEmail(email)
                 .map(user -> {
                     buildAndCache(user.getId(), email);
@@ -111,6 +118,34 @@ public class MenuService {
                 requestUrl.equals(url) || requestUrl.startsWith(url + "/"));
     }
 
+    /**
+     * 요청 URL을 담당하는 메뉴 항목의 권한을 반환.
+     * /user/create → /user/list 메뉴의 권한을 찾아 반환한다.
+     */
+    public Optional<MenuPermission> getPermissionForUrl(String email, String requestUrl) {
+        for (ModuleMenuDto module : getMenu(email)) {
+            if (module.url() != null && !module.url().isBlank()
+                    && urlCoversRequest(module.url(), requestUrl)) {
+                return Optional.of(module.permissions());
+            }
+            for (MenuItemDto item : module.menus()) {
+                if (item.url() != null && !item.url().isBlank()
+                        && urlCoversRequest(item.url(), requestUrl)) {
+                    return Optional.of(item.permissions());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    // /user/list → /user 하위 모든 경로 커버 (/user/create, /user/123, /user/123/edit)
+    private boolean urlCoversRequest(String menuUrl, String requestUrl) {
+        if (requestUrl.equals(menuUrl)) return true;
+        int lastSlash = menuUrl.lastIndexOf('/');
+        if (lastSlash <= 0) return false;
+        return requestUrl.startsWith(menuUrl.substring(0, lastSlash) + "/");
+    }
+
     private List<String> getAccessibleUrls(String email) {
         String json = redisTemplate.opsForValue().get(ACCESS_PREFIX + email);
         if (json != null) {
@@ -135,7 +170,8 @@ public class MenuService {
         String json = redisTemplate.opsForValue().get(KEY_PREFIX + email);
         if (json == null) return List.of();
         try {
-            return objectMapper.readValue(json, new TypeReference<>() {});
+            List<ModuleMenuDto> cached = objectMapper.readValue(json, new TypeReference<>() {});
+            return cached != null ? cached : List.of();
         } catch (JsonProcessingException e) {
             log.error("Failed to deserialize menu cache for {}", email, e);
             return List.of();
@@ -191,9 +227,9 @@ public class MenuService {
 
                 if (menuPerm == null) {
                     // 메뉴별 개별 설정이 없으면 모듈 레벨 권한 상속
-                    if (!modulePerm.list) continue;
+                    if (!modulePerm.isVisible()) continue;
                     menuPerm = modulePerm;
-                } else if (!menuPerm.list) {
+                } else if (!menuPerm.isVisible()) {
                     continue;
                 }
 
@@ -203,8 +239,8 @@ public class MenuService {
                 ));
             }
 
-            // 모듈 레벨 list 권한이 있거나, 접근 가능한 하위 메뉴가 하나라도 있으면 포함
-            if (!modulePerm.list && menuItems.isEmpty()) continue;
+            // 모듈 레벨에서 보이거나, 접근 가능한 하위 메뉴가 하나라도 있으면 포함
+            if (!modulePerm.isVisible() && menuItems.isEmpty()) continue;
 
             result.add(new ModuleMenuDto(
                     module.getId(), module.getName(), module.getIcon(), module.getUrl(),
@@ -216,6 +252,7 @@ public class MenuService {
     }
 
     private void cache(String email, List<ModuleMenuDto> menu) {
+        if (menu == null) menu = List.of();
         try {
             Duration ttl = Duration.ofMillis(jwtProperties.accessTokenExpiration());
 
@@ -232,18 +269,27 @@ public class MenuService {
     }
 
     private List<String> extractAccessibleUrls(List<ModuleMenuDto> modules) {
-        List<String> urls = new ArrayList<>();
+        Set<String> urls = new LinkedHashSet<>();
         for (ModuleMenuDto module : modules) {
             if (module.url() != null && !module.url().isBlank()) {
-                urls.add(module.url());
+                addUrlAndParent(urls, module.url());
             }
             for (MenuItemDto menu : module.menus()) {
                 if (menu.url() != null && !menu.url().isBlank()) {
-                    urls.add(menu.url());
+                    addUrlAndParent(urls, menu.url());
                 }
             }
         }
-        return urls;
+        return new ArrayList<>(urls);
+    }
+
+    // 메뉴 URL과 그 상위 경로를 함께 등록 — /user/list → /user 도 허용하여 /user/create, /user/{id} 등 하위 페이지 접근 허용
+    private void addUrlAndParent(Set<String> urls, String url) {
+        urls.add(url);
+        int lastSlash = url.lastIndexOf('/');
+        if (lastSlash > 0) {
+            urls.add(url.substring(0, lastSlash));
+        }
     }
 
     // 여러 Role의 권한을 OR로 합산하는 내부 집계 클래스
@@ -257,8 +303,12 @@ public class MenuService {
             this.write = this.write || s.hasWritePermission();
         }
 
+        // admin=Y이면 메뉴를 항상 표시 (list/read/write에 관계없이)
+        boolean isVisible() { return admin || list; }
+
+        // admin=Y이면 모든 권한을 true로 간주
         MenuPermission toDto() {
-            return new MenuPermission(admin, list, read, write);
+            return new MenuPermission(admin, admin || list, admin || read, admin || write);
         }
     }
 }

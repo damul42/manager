@@ -37,12 +37,10 @@ public class ModuleService {
 
     // ── 목록 ──────────────────────────────────────────────────────────
 
-    public List<ModuleListDto> getList(String status) {
-        if (!StringUtils.hasText(status)) {
-            return moduleRepository.findAllByOrderBySeqAsc()
-                    .stream().map(ModuleListDto::from).toList();
-        }
-        return moduleRepository.findAllByStatusOrderBySeqAsc(status)
+    public List<ModuleListDto> getList(String name, String status) {
+        String nameParam   = StringUtils.hasText(name)   ? name   : null;
+        String statusParam = StringUtils.hasText(status) ? status : null;
+        return moduleRepository.search(nameParam, statusParam)
                 .stream().map(ModuleListDto::from).toList();
     }
 

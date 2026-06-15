@@ -1,0 +1,636 @@
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{shared/base(title=${'코드 관리'})}">
+
+<th:block layout:fragment="styles">
+    <link rel="stylesheet" th:href="@{/plugins/datatables/responsive.bootstrap5.min.css}" type="text/css"/>
+</th:block>
+
+<th:block layout:fragment="content">
+<div class="wrapper">
+    <th:block th:replace="~{shared/partials/topbar :: topbar}"></th:block>
+    <th:block th:replace="~{shared/partials/sidenav :: sidenav}"></th:block>
+
+    <div class="content-page">
+        <div class="container-fluid">
+            <th:block th:replace="~{shared/partials/page-title :: page-title(subtitle='시스템', title='코드 관리')}"></th:block>
+
+            <div class="row g-3">
+
+                <!-- ── 왼쪽 40% : 카테고리 ─────────────────────────────── -->
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                            <h4 class="card-title mb-0">카테고리 목록</h4>
+                            <div class="d-flex gap-2 align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary" id="btn-refresh-cats" title="새로고침">
+                                    <i class="ti ti-refresh"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary lh-1" id="btn-add-cat">
+                                    <i class="ti ti-plus me-1"></i>카테고리 추가
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="cat-loading" class="text-center py-4" style="display:none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="ms-2 text-muted">불러오는 중...</span>
+                        </div>
+                        <div id="cat-error" class="alert alert-danger mx-3 mt-2" style="display:none;">
+                            <i class="ti ti-alert-circle me-1"></i>
+                            <span id="cat-error-msg">데이터를 불러오지 못했습니다.</span>
+                        </div>
+
+                        <div class="card-body p-2">
+                            <table class="table dt-responsive align-middle mb-0 table-sm" id="cat-list-table">
+                                <thead class="thead-sm text-uppercase fs-xxs">
+                                    <tr>
+                                        <th style="width:60px;">순서</th>
+                                        <th>카테고리값</th>
+                                        <th class="text-center" style="width:80px;">상태</th>
+                                        <th class="text-center" style="width:90px;">액션</th>
+                                    </tr>
+                                    <tr id="cat-search-inputs">
+                                        <th></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="카테고리값" type="text"/></th>
+                                        <th>
+                                            <select class="form-select form-select-sm bg-light-subtle border-light" id="cat-status-filter">
+                                                <option value="">전체</option>
+                                                <option value="00">활성</option>
+                                                <option value="99">비활성</option>
+                                            </select>
+                                        </th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 오른쪽 60% : 코드 항목 ───────────────────────────────── -->
+                <div class="col-lg-8">
+                    <div class="card h-100">
+                        <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="card-title mb-0 d-inline">코드 목록</h4>
+                                <span id="selected-category-badge" class="badge bg-primary ms-2" style="display:none!important;"></span>
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary" id="btn-refresh-codes" title="새로고침" disabled>
+                                    <i class="ti ti-refresh"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary lh-1" id="btn-add-code" disabled>
+                                    <i class="ti ti-plus me-1"></i>코드 추가
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="code-loading" class="text-center py-4" style="display:none;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="ms-2 text-muted">불러오는 중...</span>
+                        </div>
+                        <div id="code-error" class="alert alert-danger mx-3 mt-2" style="display:none;">
+                            <i class="ti ti-alert-circle me-1"></i>
+                            <span id="code-error-msg">데이터를 불러오지 못했습니다.</span>
+                        </div>
+
+                        <div class="card-body p-2">
+                            <div id="code-placeholder" class="text-center text-muted py-5">
+                                <i class="ti ti-arrow-right fs-2 d-block mb-2"></i>
+                                왼쪽에서 카테고리를 선택하세요.
+                            </div>
+                            <div id="code-table-wrap" style="display:none;">
+                                <table class="table dt-responsive align-middle mb-0 table-sm" id="code-list-table">
+                                    <thead class="thead-sm text-uppercase fs-xxs">
+                                    <tr>
+                                        <th style="width:60px;">순서</th>
+                                        <th style="width:120px;">코드 ID</th>
+                                        <th>코드값</th>
+                                        <th style="width:100px;">참조1</th>
+                                        <th>비고</th>
+                                        <th class="text-center" style="width:80px;">상태</th>
+                                        <th class="text-center" style="width:100px;">액션</th>
+                                    </tr>
+                                    <tr id="code-search-inputs">
+                                        <th></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="코드 ID" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="코드값" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="참조1" type="text"/></th>
+                                        <th><input class="form-control form-control-sm bg-light-subtle border-light" placeholder="비고" type="text"/></th>
+                                        <th>
+                                            <select class="form-select form-select-sm bg-light-subtle border-light" id="code-status-filter">
+                                                <option value="">전체</option>
+                                                <option value="00">활성</option>
+                                                <option value="99">비활성</option>
+                                            </select>
+                                        </th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- row -->
+
+        </div><!-- container-fluid -->
+        <th:block th:replace="~{shared/partials/footer :: footer}"></th:block>
+    </div>
+</div>
+<th:block th:replace="~{shared/partials/customizer :: customizer}"></th:block>
+<th:block th:replace="~{shared/partials/footer-scripts :: footer-scripts}"></th:block>
+
+<!-- ── 카테고리 모달 ─────────────────────────────────────────────── -->
+<div class="modal fade" id="modal-category" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-cat-title">카테고리 등록</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="cat-f-value">카테고리값 <span class="text-danger">*</span></label>
+                        <input class="form-control" id="cat-f-value" type="text" placeholder="예: USER_STATUS"/>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" for="cat-f-seq">순서</label>
+                        <input class="form-control" id="cat-f-seq" type="number" placeholder="숫자"/>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" for="cat-f-status">상태</label>
+                        <select class="form-select" id="cat-f-status">
+                            <option value="00">활성</option>
+                            <option value="99">비활성</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="cat-f-remark">비고</label>
+                        <textarea class="form-control" id="cat-f-remark" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="btn-save-cat">저장</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── 코드 항목 모달 ─────────────────────────────────────────────── -->
+<div class="modal fade" id="modal-code" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-code-title">코드 등록</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="code-f-id">코드 ID <span class="text-danger">*</span></label>
+                        <input class="form-control" id="code-f-id" type="text" placeholder="예: 00"/>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="code-f-value">코드값</label>
+                        <input class="form-control" id="code-f-value" type="text" placeholder="예: ACTIVE"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="code-f-seq">순서</label>
+                        <input class="form-control" id="code-f-seq" type="number" placeholder="숫자"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="code-f-status">상태</label>
+                        <select class="form-select" id="code-f-status">
+                            <option value="00">활성</option>
+                            <option value="99">비활성</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="code-f-remark">비고</label>
+                        <input class="form-control" id="code-f-remark" type="text"/>
+                    </div>
+                    <div class="col-12"><hr class="my-1"/><p class="text-muted small mb-1">참조 문자열</p></div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="code-f-rs1">참조1</label>
+                        <input class="form-control" id="code-f-rs1" type="text"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="code-f-rs2">참조2</label>
+                        <input class="form-control" id="code-f-rs2" type="text"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="code-f-rs3">참조3</label>
+                        <input class="form-control" id="code-f-rs3" type="text"/>
+                    </div>
+                    <div class="col-12"><p class="text-muted small mb-1">참조 숫자</p></div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="code-f-rn1">참조숫자1</label>
+                        <input class="form-control" id="code-f-rn1" type="number" step="any"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="code-f-rn2">참조숫자2</label>
+                        <input class="form-control" id="code-f-rn2" type="number" step="any"/>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="code-f-rn3">참조숫자3</label>
+                        <input class="form-control" id="code-f-rn3" type="number" step="any"/>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="btn-save-code">저장</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</th:block>
+
+<th:block layout:fragment="scripts">
+    <script th:src="@{/plugins/jquery/jquery.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.bootstrap5.min.js}"></script>
+    <script th:src="@{/plugins/datatables/dataTables.responsive.min.js}"></script>
+    <script th:src="@{/plugins/datatables/responsive.bootstrap5.min.js}"></script>
+
+    <script th:inline="javascript">
+    (function () {
+        'use strict';
+
+        const MSG = /*[[${messages}]]*/ {};
+
+        // ── 상태 ─────────────────────────────────────────────────────
+        let selectedCategoryId   = null;
+        let selectedCategoryName = null;
+        let editingCatId         = null;
+        let editingCodeId        = null;
+
+        const catModalEl  = document.getElementById('modal-category');
+        const codeModalEl = document.getElementById('modal-code');
+        const catModal    = new bootstrap.Modal(catModalEl);
+        const codeModal   = new bootstrap.Modal(codeModalEl);
+
+        // ── 카테고리 DataTable ────────────────────────────────────────
+        const catTable = new DataTable('#cat-list-table', {
+            responsive: true,
+            orderCellsTop: true,
+            language: {
+                emptyTable:  MSG['dt.emptyTable']     || '데이터가 없습니다.',
+                zeroRecords: MSG['dt.zeroRecords']    || '검색 결과가 없습니다.',
+                info:        MSG['dt.info']           || '_START_ - _END_ / _TOTAL_ 건',
+                infoEmpty:   MSG['dt.infoEmpty']      || '0 건',
+                search:      MSG['dt.search']         || '검색:',
+                lengthMenu:  MSG['dt.lengthMenu']     || '_MENU_ 건 보기',
+                paginate: {
+                    previous: MSG['dt.paginate.prev'] || '이전',
+                    next:     MSG['dt.paginate.next'] || '다음'
+                }
+            },
+            columns: [
+                { data: 'codeSeq', defaultContent: '-' },
+                { data: 'codeValue', defaultContent: '-' },
+                {
+                    data: 'status',
+                    className: 'text-center',
+                    searchable: false,
+                    render: (v) => v === '00'
+                        ? `<span class="badge badge-soft-success">활성</span>`
+                        : `<span class="badge badge-soft-danger">비활성</span>`
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    searchable: false,
+                    className: 'text-center',
+                    render: (id, type, row) => `
+                        <div class="d-flex justify-content-center gap-1">
+                            <button class="btn btn-icon btn-xs btn-outline-warning"
+                                    onclick="openCatEditModal('${id}')"
+                                    title="수정">
+                                <i class="ti ti-pencil"></i>
+                            </button>
+                            <button class="btn btn-icon btn-xs btn-outline-danger"
+                                    onclick="deleteCat('${id}')"
+                                    title="삭제">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>`
+                }
+            ],
+            initComplete: function () {
+                this.api().columns([1]).every(function (idx) {
+                    const col = this;
+                    const input = document.querySelector(
+                        `#cat-search-inputs th:nth-child(${idx + 1}) input`
+                    );
+                    if (input) {
+                        input.addEventListener('input', function () {
+                            col.search(this.value).draw();
+                        });
+                    }
+                });
+            }
+        });
+
+        // 카테고리 행 클릭 → 코드 로드
+        document.querySelector('#cat-list-table tbody').addEventListener('click', function (e) {
+            const tr = e.target.closest('tr');
+            if (!tr || e.target.closest('button')) return;
+            const row = catTable.row(tr);
+            if (!row || !row.data()) return;
+            const d = row.data();
+            selectCategory(d.id, d.codeValue);
+        });
+
+        // ── 코드 DataTable ────────────────────────────────────────────
+        const codeTable = new DataTable('#code-list-table', {
+            responsive: true,
+            orderCellsTop: true,
+            language: {
+                emptyTable:  MSG['dt.emptyTable']     || '데이터가 없습니다.',
+                zeroRecords: MSG['dt.zeroRecords']    || '검색 결과가 없습니다.',
+                info:        MSG['dt.info']           || '_START_ - _END_ / _TOTAL_ 건',
+                infoEmpty:   MSG['dt.infoEmpty']      || '0 건',
+                search:      MSG['dt.search']         || '검색:',
+                lengthMenu:  MSG['dt.lengthMenu']     || '_MENU_ 건 보기',
+                paginate: {
+                    previous: MSG['dt.paginate.prev'] || '이전',
+                    next:     MSG['dt.paginate.next'] || '다음'
+                }
+            },
+            columns: [
+                { data: 'codeSeq',   defaultContent: '-' },
+                { data: 'codeId',    defaultContent: '-' },
+                { data: 'codeValue', defaultContent: '-' },
+                { data: 'refString1', defaultContent: '-' },
+                { data: 'remark',    defaultContent: '-' },
+                {
+                    data: 'status',
+                    className: 'text-center',
+                    searchable: false,
+                    render: (v) => v === '00'
+                        ? `<span class="badge badge-soft-success">활성</span>`
+                        : `<span class="badge badge-soft-danger">비활성</span>`
+                },
+                {
+                    data: 'id',
+                    orderable: false,
+                    searchable: false,
+                    className: 'text-center',
+                    render: (id) => `
+                        <div class="d-flex justify-content-center gap-1">
+                            <button class="btn btn-icon btn-xs btn-outline-warning"
+                                    onclick="openCodeEditModal('${id}')"
+                                    title="수정">
+                                <i class="ti ti-pencil"></i>
+                            </button>
+                            <button class="btn btn-icon btn-xs btn-outline-danger"
+                                    onclick="deleteCode('${id}')"
+                                    title="삭제">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>`
+                }
+            ],
+            initComplete: function () {
+                this.api().columns([1, 2, 3, 4]).every(function (idx) {
+                    const col = this;
+                    const input = document.querySelector(
+                        `#code-search-inputs th:nth-child(${idx + 1}) input`
+                    );
+                    if (input) {
+                        input.addEventListener('input', function () {
+                            col.search(this.value).draw();
+                        });
+                    }
+                });
+            }
+        });
+
+        // ── 카테고리 로드 ─────────────────────────────────────────────
+        function loadCategories() {
+            document.getElementById('cat-loading').style.display = '';
+            document.getElementById('cat-error').style.display   = 'none';
+
+            const status = document.getElementById('cat-status-filter').value;
+            const params = {};
+            if (status) params.status = status;
+
+            axios.get('/api/codes/categories', { params })
+                .then(res => {
+                    catTable.clear().rows.add(res.data).draw();
+                    document.querySelectorAll('#cat-search-inputs input').forEach(i => i.value = '');
+                    catTable.columns().search('');
+                })
+                .catch(err => {
+                    const msg = err.response?.data?.message || '데이터를 불러오지 못했습니다.';
+                    document.getElementById('cat-error-msg').textContent = msg;
+                    document.getElementById('cat-error').style.display = '';
+                })
+                .finally(() => { document.getElementById('cat-loading').style.display = 'none'; });
+        }
+
+        // ── 코드 로드 ─────────────────────────────────────────────────
+        function loadCodes() {
+            if (!selectedCategoryId) return;
+            document.getElementById('code-loading').style.display = '';
+            document.getElementById('code-error').style.display   = 'none';
+
+            const status = document.getElementById('code-status-filter').value;
+            const params = {};
+            if (status) params.status = status;
+
+            axios.get(`/api/codes/categories/${selectedCategoryId}/items`, { params })
+                .then(res => {
+                    codeTable.clear().rows.add(res.data).draw();
+                    document.querySelectorAll('#code-search-inputs input').forEach(i => i.value = '');
+                    codeTable.columns().search('');
+                })
+                .catch(err => {
+                    const msg = err.response?.data?.message || '데이터를 불러오지 못했습니다.';
+                    document.getElementById('code-error-msg').textContent = msg;
+                    document.getElementById('code-error').style.display = '';
+                })
+                .finally(() => { document.getElementById('code-loading').style.display = 'none'; });
+        }
+
+        // ── 카테고리 선택 ─────────────────────────────────────────────
+        function selectCategory(id, name) {
+            selectedCategoryId   = id;
+            selectedCategoryName = name;
+
+            // 카테고리 행 하이라이트
+            catTable.rows().nodes().toArray().forEach(tr => tr.classList.remove('table-primary'));
+            catTable.rows().every(function () {
+                if (this.data().id === id) {
+                    this.node().classList.add('table-primary');
+                }
+            });
+
+            // 왼쪽 패널 활성화
+            document.getElementById('code-placeholder').style.display  = 'none';
+            document.getElementById('code-table-wrap').style.display   = '';
+            document.getElementById('btn-add-code').disabled           = false;
+            document.getElementById('btn-refresh-codes').disabled      = false;
+
+            const badge = document.getElementById('selected-category-badge');
+            badge.textContent = name;
+            badge.style.setProperty('display', '', 'important');
+
+            loadCodes();
+        }
+
+        // ── 카테고리 모달 ─────────────────────────────────────────────
+        document.getElementById('btn-add-cat').addEventListener('click', () => {
+            editingCatId = null;
+            document.getElementById('modal-cat-title').textContent = '카테고리 등록';
+            document.getElementById('cat-f-value').value  = '';
+            document.getElementById('cat-f-seq').value    = '';
+            document.getElementById('cat-f-status').value = '00';
+            document.getElementById('cat-f-remark').value = '';
+            catModal.show();
+        });
+
+        window.openCatEditModal = function (id) {
+            const row = catTable.rows().data().toArray().find(d => d.id === id);
+            if (!row) return;
+            editingCatId = id;
+            document.getElementById('modal-cat-title').textContent = '카테고리 수정';
+            document.getElementById('cat-f-value').value  = row.codeValue  || '';
+            document.getElementById('cat-f-seq').value    = row.codeSeq    != null ? row.codeSeq : '';
+            document.getElementById('cat-f-status').value = row.status     || '00';
+            document.getElementById('cat-f-remark').value = row.remark     || '';
+            catModal.show();
+        };
+
+        document.getElementById('btn-save-cat').addEventListener('click', () => {
+            const codeValue = document.getElementById('cat-f-value').value.trim();
+            if (!codeValue) { alert('카테고리값을 입력하세요.'); return; }
+
+            const body = {
+                codeValue,
+                codeSeq:  document.getElementById('cat-f-seq').value    ? parseInt(document.getElementById('cat-f-seq').value) : null,
+                status:   document.getElementById('cat-f-status').value,
+                remark:   document.getElementById('cat-f-remark').value.trim() || null
+            };
+
+            const req = editingCatId
+                ? axios.put(`/api/codes/categories/${editingCatId}`, body)
+                : axios.post('/api/codes/categories', body);
+
+            req.then(() => { catModal.hide(); loadCategories(); })
+               .catch(err => alert(err.response?.data?.message || '저장에 실패했습니다.'));
+        });
+
+        window.deleteCat = function (id) {
+            if (!confirm('카테고리를 비활성화합니다. 하위 코드도 모두 비활성화됩니다. 계속하시겠습니까?')) return;
+            axios.delete(`/api/codes/categories/${id}`)
+                .then(() => {
+                    if (selectedCategoryId === id) {
+                        selectedCategoryId = null;
+                        document.getElementById('code-placeholder').style.display = '';
+                        document.getElementById('code-table-wrap').style.display  = 'none';
+                        document.getElementById('btn-add-code').disabled          = true;
+                        document.getElementById('btn-refresh-codes').disabled     = true;
+                        document.getElementById('selected-category-badge').style.setProperty('display', 'none', 'important');
+                        codeTable.clear().draw();
+                    }
+                    loadCategories();
+                })
+                .catch(err => alert(err.response?.data?.message || '삭제에 실패했습니다.'));
+        };
+
+        // ── 코드 모달 ─────────────────────────────────────────────────
+        document.getElementById('btn-add-code').addEventListener('click', () => {
+            if (!selectedCategoryId) return;
+            editingCodeId = null;
+            document.getElementById('modal-code-title').textContent = '코드 등록';
+            ['code-f-id','code-f-value','code-f-rs1','code-f-rs2','code-f-rs3',
+             'code-f-rn1','code-f-rn2','code-f-rn3','code-f-remark'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('code-f-seq').value    = '';
+            document.getElementById('code-f-status').value = '00';
+            codeModal.show();
+        });
+
+        window.openCodeEditModal = function (id) {
+            const row = codeTable.rows().data().toArray().find(d => d.id === id);
+            if (!row) return;
+            editingCodeId = id;
+            document.getElementById('modal-code-title').textContent = '코드 수정';
+            document.getElementById('code-f-id').value     = row.codeId      || '';
+            document.getElementById('code-f-value').value  = row.codeValue   || '';
+            document.getElementById('code-f-seq').value    = row.codeSeq     != null ? row.codeSeq : '';
+            document.getElementById('code-f-status').value = row.status      || '00';
+            document.getElementById('code-f-remark').value = row.remark      || '';
+            document.getElementById('code-f-rs1').value    = row.refString1  || '';
+            document.getElementById('code-f-rs2').value    = row.refString2  || '';
+            document.getElementById('code-f-rs3').value    = row.refString3  || '';
+            document.getElementById('code-f-rn1').value    = row.refNumber1  != null ? row.refNumber1 : '';
+            document.getElementById('code-f-rn2').value    = row.refNumber2  != null ? row.refNumber2 : '';
+            document.getElementById('code-f-rn3').value    = row.refNumber3  != null ? row.refNumber3 : '';
+            codeModal.show();
+        };
+
+        document.getElementById('btn-save-code').addEventListener('click', () => {
+            const codeId = document.getElementById('code-f-id').value.trim();
+            if (!codeId) { alert('코드 ID를 입력하세요.'); return; }
+
+            const numVal = (id) => {
+                const v = document.getElementById(id).value;
+                return v !== '' ? parseFloat(v) : null;
+            };
+
+            const body = {
+                codeId,
+                codeValue:   document.getElementById('code-f-value').value.trim()  || null,
+                codeCategory: selectedCategoryId,
+                codeSeq:     document.getElementById('code-f-seq').value ? parseInt(document.getElementById('code-f-seq').value) : null,
+                status:      document.getElementById('code-f-status').value,
+                remark:      document.getElementById('code-f-remark').value.trim() || null,
+                refString1:  document.getElementById('code-f-rs1').value.trim()    || null,
+                refString2:  document.getElementById('code-f-rs2').value.trim()    || null,
+                refString3:  document.getElementById('code-f-rs3').value.trim()    || null,
+                refNumber1:  numVal('code-f-rn1'),
+                refNumber2:  numVal('code-f-rn2'),
+                refNumber3:  numVal('code-f-rn3')
+            };
+
+            const req = editingCodeId
+                ? axios.put(`/api/codes/items/${editingCodeId}`, body)
+                : axios.post('/api/codes/items', body);
+
+            req.then(() => { codeModal.hide(); loadCodes(); })
+               .catch(err => alert(err.response?.data?.message || '저장에 실패했습니다.'));
+        });
+
+        window.deleteCode = function (id) {
+            if (!confirm('코드를 비활성화하시겠습니까?')) return;
+            axios.delete(`/api/codes/items/${id}`)
+                .then(() => loadCodes())
+                .catch(err => alert(err.response?.data?.message || '삭제에 실패했습니다.'));
+        };
+
+        // ── 공통 이벤트 ───────────────────────────────────────────────
+        document.getElementById('cat-status-filter').addEventListener('change', loadCategories);
+        document.getElementById('btn-refresh-cats').addEventListener('click', loadCategories);
+        document.getElementById('code-status-filter').addEventListener('change', loadCodes);
+        document.getElementById('btn-refresh-codes').addEventListener('click', loadCodes);
+
+        // ── 초기 로드 ─────────────────────────────────────────────────
+        loadCategories();
+
+    })();
+    </script>
+</th:block>
+
+</html>

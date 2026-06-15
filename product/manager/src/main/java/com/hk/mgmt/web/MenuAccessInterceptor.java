@@ -1,5 +1,6 @@
 package com.hk.mgmt.web;
 
+import com.hk.mgmt.dto.menu.MenuPermission;
 import com.hk.mgmt.service.MenuService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -45,11 +46,33 @@ public class MenuAccessInterceptor implements HandlerInterceptor {
         }
 
         if (!menuService.isAccessible(email, requestUrl)) {
-            log.warn("Access denied: {} → {}", email, requestUrl);
+            log.warn("Access denied (no menu): {} → {}", email, requestUrl);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+
+        // URL 패턴으로 필요한 action을 판단하고 메뉴 권한과 대조
+        var permOpt = menuService.getPermissionForUrl(email, requestUrl);
+        if (permOpt.isPresent() && !hasActionPermission(permOpt.get(), requestUrl)) {
+            log.warn("Access denied (insufficient permission): {} → {}", email, requestUrl);
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * URL 패턴으로 필요한 action을 판단한다.
+     * /list  → list 권한 필요
+     * /create, /edit → write 권한 필요
+     * /{id}  → read 권한 필요
+     */
+    private boolean hasActionPermission(MenuPermission perm, String url) {
+        if (perm.admin()) return true;
+        if (url.endsWith("/list"))   return perm.list();
+        if (url.endsWith("/create")) return perm.write();
+        if (url.endsWith("/edit"))   return perm.write();
+        return perm.read();
     }
 }
